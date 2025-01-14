@@ -221,6 +221,7 @@ class TestBundlePlugin implements Plugin<Project> {
                         "-bundles", p.tasks.jar.outputs.files.singleFile.path,
                         "-publishArtifacts",
                         "-nosplash",
+                        '-vm', System.getProperty('java.home') + '/bin/java',
                         "-consoleLog")
             }
         }
@@ -235,6 +236,7 @@ class TestBundlePlugin implements Plugin<Project> {
                     "-bundles", project.jar.outputs.files.singleFile.path,
                     "-publishArtifacts",
                     "-nosplash",
+                    '-vm', System.getProperty('java.home') + '/bin/java',
                     "-consoleLog")
         }
     }
@@ -255,6 +257,7 @@ class TestBundlePlugin implements Plugin<Project> {
                         '-p2.arch', Constants.arch,
                         '-roaming',
                         '-nosplash',
+                        '-vm', System.getProperty('java.home') + '/bin/java',
                         '-consoleLog')
             }
         }
@@ -272,6 +275,7 @@ class TestBundlePlugin implements Plugin<Project> {
                     '-p2.ws', Constants.ws,
                     '-p2.arch', Constants.arch,
                     '-roaming',
+                    '-vm', System.getProperty('java.home') + '/bin/java',
                     '-nosplash')
         }
     }

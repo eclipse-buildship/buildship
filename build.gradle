@@ -107,6 +107,7 @@ project.assembleTargetPlatform.doLast {
                     '-p2.ws', Constants.ws,
                     '-p2.arch', Constants.arch,
                     '-roaming',
+                    '-vm', System.getProperty('java.home') + '/bin/java',
                     '-nosplash')
         }
 
