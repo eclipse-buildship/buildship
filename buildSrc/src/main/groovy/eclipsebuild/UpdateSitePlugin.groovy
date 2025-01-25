@@ -338,6 +338,7 @@ class UpdateSitePlugin implements Plugin<Project> {
                     '-publishArtifacts',
                     '-reusePack200Files',
                     '-configs', 'ANY',
+                    '-vm', System.getProperty('java.home') + '/bin/java',
                     '-consoleLog')
         }
 
@@ -350,6 +351,7 @@ class UpdateSitePlugin implements Plugin<Project> {
                     '-metadataRepository', repositoryDir.toURI().toURL(),
                     '-categoryDefinition',  project.updateSite.siteDescriptor.toURI().toURL(),
                     '-compress',
+                    '-vm', System.getProperty('java.home') + '/bin/java',
                     '-consoleLog')
         }
 
