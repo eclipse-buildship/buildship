@@ -59,6 +59,7 @@ import org.eclipse.buildship.ui.internal.util.widget.FilteredTree;
 import org.eclipse.buildship.ui.internal.util.widget.PatternFilter;
 import org.eclipse.buildship.ui.internal.view.BasePage;
 import org.eclipse.buildship.ui.internal.view.CollapseAllTreeNodesAction;
+import org.eclipse.buildship.ui.internal.view.ExpandAllFailedTasksAction;
 import org.eclipse.buildship.ui.internal.view.ExpandAllTreeNodesAction;
 import org.eclipse.buildship.ui.internal.view.MultiPageView;
 import org.eclipse.buildship.ui.internal.view.PageSite;
@@ -290,6 +291,9 @@ public final class ExecutionPage extends BasePage<FilteredTree> implements NodeS
         toolbarManager.appendToGroup(MultiPageView.PAGE_GROUP, new ExpandAllTreeNodesAction(getPageControl().getViewer()));
         toolbarManager.appendToGroup(MultiPageView.PAGE_GROUP, new CollapseAllTreeNodesAction(getPageControl().getViewer()));
         toolbarManager.appendToGroup(MultiPageView.PAGE_GROUP, new ShowFilterAction(getPageControl()));
+        ExpandAllFailedTasksAction action = new ExpandAllFailedTasksAction(getPageControl().getViewer());
+        action.setContentProvider((ExecutionPageContentProvider)getPageControl().getViewer().getContentProvider());
+        toolbarManager.appendToGroup(MultiPageView.PAGE_GROUP, action);
         toolbarManager.appendToGroup(MultiPageView.PAGE_GROUP, new Separator());
         toolbarManager.appendToGroup(MultiPageView.PAGE_GROUP, new SwitchToConsoleViewAction(this));
         toolbarManager.appendToGroup(MultiPageView.PAGE_GROUP, new Separator());

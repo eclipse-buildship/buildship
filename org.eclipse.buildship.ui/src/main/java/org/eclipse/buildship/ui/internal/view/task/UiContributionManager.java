@@ -27,6 +27,7 @@ import org.eclipse.buildship.ui.internal.util.nodeselection.ActionShowingContext
 import org.eclipse.buildship.ui.internal.util.nodeselection.SelectionSpecificAction;
 import org.eclipse.buildship.ui.internal.util.selection.ContextActivatingViewPartListener;
 import org.eclipse.buildship.ui.internal.view.CollapseAllTreeNodesAction;
+import org.eclipse.buildship.ui.internal.view.ExpandAllFailedTasksAction;
 import org.eclipse.buildship.ui.internal.view.ExpandAllTreeNodesAction;
 import org.eclipse.buildship.ui.internal.view.ShowFilterAction;
 
@@ -94,6 +95,7 @@ public final class UiContributionManager {
     private void populateToolBar() {
         IToolBarManager manager = this.taskView.getViewSite().getActionBars().getToolBarManager();
         manager.add(new GroupMarker(TOOLBAR_TREE_GROUP));
+        manager.appendToGroup(TOOLBAR_TREE_GROUP, new ExpandAllFailedTasksAction(this.taskView.getTreeViewer()));
         manager.appendToGroup(TOOLBAR_TREE_GROUP, new ExpandAllTreeNodesAction(this.taskView.getTreeViewer()));
         manager.appendToGroup(TOOLBAR_TREE_GROUP, new CollapseAllTreeNodesAction(this.taskView.getTreeViewer()));
         manager.appendToGroup(TOOLBAR_TREE_GROUP, new ShowFilterAction(this.taskView.getFilteredTree()));
