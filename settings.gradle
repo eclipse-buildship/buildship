@@ -16,7 +16,6 @@ develocity {
             ipAddresses { addresses -> addresses.collect { address -> "0.0.0.0" } }
             externalProcessName { processName -> "non-build-process" }
             hostname { host -> isCI ? 'ci' : 'local' }
-
         }
         uploadInBackground = !isCI
     }
@@ -50,25 +49,14 @@ include ':org.eclipse.buildship.oomph.edit'
 include ':org.eclipse.buildship.oomph.feature'
 include ':org.eclipse.buildship.oomph.test'
 
-// Use local build cache on developer machine and remote cache on CI
-String cacheUrl = System.getProperty('gradle.cache.remote.url', '')
-String cacheUser = System.getProperty('gradle.cache.remote.username', '')
-String cachePassword = System.getProperty('gradle.cache.remote.password', '')
-boolean remoteCacheAvailable = cacheUrl != '' && cacheUrl != '' && cachePassword != ''
-
 buildCache {
     local {
-        enabled = !remoteCacheAvailable
+        enabled = !isCI
     }
 
-    if (remoteCacheAvailable) {
-        remote(HttpBuildCache) {
-            url = cacheUrl
-            credentials {
-                username = cacheUser
-                password = cachePassword
-                push = true
-            }
-        }
+    remote(develocity.buildCache) {
+        enabled = true
+        push = isCI
     }
+
 }
