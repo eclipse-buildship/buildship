@@ -1,0 +1,57 @@
+name: "Run Gradle build"
+inputs:
+  name:
+    required: true
+    description: "Name of the action"
+
+  eclipse:
+    required: true
+    description: "Eclipse version to use"
+
+  os:
+    required: true
+    description: "Operating system to use"
+
+  command:
+    required: true
+    description: "Gradle command(s) to run"
+
+  java:
+    required: false
+    description: "Forced Java version to use"
+
+  java-dist:
+    required: false
+    description: "Java distribution to use"
+    default: "temurin"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Format Eclipse version
+      id: eclipse-version
+      shell: bash
+      run: ECLIPSE_VERSION=${{ inputs.eclipse }} && echo "formatted=${ECLIPSE_VERSION//.}" >> "$GITHUB_OUTPUT"
+
+    - name: Calculate Java distribution
+      id: java-version
+      shell: bash
+      run: |-
+        if [[ -n "${{ inputs.java }}" ]]; then
+          echo "java=${{ inputs.java }}" >> "$GITHUB_OUTPUT"
+        else
+          [[ $(echo "${{ steps.eclipse-version.outputs.formatted }}  < 425" | bc -l) -eq 1 ]] && echo "java=11"  >> "$GITHUB_OUTPUT" || echo "java=17"  >> "$GITHUB_OUTPUT"
+        fi
+
+    - name: Set up JDK
+      uses: actions/setup-java@v4
+      with:
+        java-version: ${{ steps.java-version.outputs.java }}
+        distribution: ${{ inputs.java-dist }}
+
+    - run: echo "Run ${{ inputs.name }} with Eclipse ${{ inputs.eclipse }} and Java ${{ steps.java-version.outputs.java }} on ${{ inputs.os }}"
+      shell: bash
+
+    - name: Run build
+      shell: bash
+      run: echo ./gradlew ${{ inputs.command }} -Peclipse.version=${{ steps.eclipse-version.outputs.formatted }} -Pbuild.invoker=CI --info --stacktrace
