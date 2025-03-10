@@ -54,4 +54,4 @@ runs:
 
     - name: Run build
       shell: bash
-      run: echo ./gradlew ${{ inputs.command }} -Peclipse.version=${{ steps.eclipse-version.outputs.formatted }} -Pbuild.invoker=CI --info --stacktrace
+      run: ./gradlew ${{ inputs.command }} -Peclipse.version=${{ steps.eclipse-version.outputs.formatted }} -Pbuild.invoker=CI --info --stacktrace
