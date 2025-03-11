@@ -27,6 +27,6 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
-          develocity-access-key: ${{ secrets.DEVELOCITY_ACCESS_KEY }}
+          develocity-access-key: ${{ secrets.DEVELOCITY_API_TOKEN }}
       - name: Build with Gradle
         run: ./gradlew build -x eclipseTest '-Pbuild.invoker=ci'
