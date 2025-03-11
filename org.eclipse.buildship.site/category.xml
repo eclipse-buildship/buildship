@@ -3,9 +3,6 @@
    <feature url="features/org.eclipse.buildship_0.0.0.jar" id="org.eclipse.buildship" version="0.0.0">
       <category name="Buildship"/>
    </feature>
-   <feature url="features/org.eclipse.buildship.kotlin_0.0.0.jar" id="org.eclipse.buildship.kotlin" version="0.0.0">
-      <category name="BuildshipExtras"/>
-   </feature>
    <feature url="features/org.eclipse.buildship.gradleprop_0.0.0.jar" id="org.eclipse.buildship.gradleprop" version="0.0.0">
       <category name="BuildshipExtrasIncubating"/>
    </feature>

@@ -51,10 +51,6 @@ dependencies {
         localPlugin project(':org.eclipse.buildship.dcl.provider')
         localFeature project(':org.eclipse.buildship.dcl.feature')
     }
-    if (findProperty('include.experimental.features') == 'true') {
-        localPlugin project(':org.eclipse.buildship.kotlin')
-        localFeature project(':org.eclipse.buildship.kotlin.feature')
-    }
 
     // include 3rd party dependencies in the update site
     externalPlugin withEclipseBundle('org.gradle.toolingapi')
