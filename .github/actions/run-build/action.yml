@@ -20,11 +20,6 @@ inputs:
     required: false
     description: "Forced Java version to use"
 
-  java-dist:
-    required: false
-    description: "Java distribution to use"
-    default: "temurin"
-
 runs:
   using: "composite"
   steps:
@@ -39,19 +34,23 @@ runs:
       run: |-
         if [[ -n "${{ inputs.java }}" ]]; then
           echo "java=${{ inputs.java }}" >> "$GITHUB_OUTPUT"
-        else
-          [[ $(echo "${{ steps.eclipse-version.outputs.formatted }}  < 425" | bc -l) -eq 1 ]] && echo "java=11"  >> "$GITHUB_OUTPUT" || echo "java=17"  >> "$GITHUB_OUTPUT"
+        elif [[ $(echo "${{ steps.eclipse-version.outputs.formatted }}  < 417" | bc -l) -eq 1 ]]; then
+          echo "java=8"  >> "$GITHUB_OUTPUT" 
+        elif [[ $(echo "${{ steps.eclipse-version.outputs.formatted }}  < 425" | bc -l) -eq 1 ]]; then
+          echo "java=11"  >> "$GITHUB_OUTPUT" || echo "java=17"  >> "$GITHUB_OUTPUT"
+        else 
+          echo "java=17"  >> "$GITHUB_OUTPUT"
         fi
 
     - name: Set up JDK
       uses: actions/setup-java@v4
       with:
-        java-version: ${{ steps.java-version.outputs.java }}
-        distribution: ${{ inputs.java-dist }}
+        java-version: 11
+        distribution: "temurin"
 
     - run: echo "Run ${{ inputs.name }} with Eclipse ${{ inputs.eclipse }} and Java ${{ steps.java-version.outputs.java }} on ${{ inputs.os }}"
       shell: bash
 
     - name: Run build
       shell: bash
-      run: ./gradlew ${{ inputs.command }} -Peclipse.version=${{ steps.eclipse-version.outputs.formatted }} -Pbuild.invoker=CI --info --stacktrace
+      run: ./gradlew ${{ inputs.command }} -Peclipse.version=${{ steps.eclipse-version.outputs.formatted }} -Peclipse.test.java.version=${{ steps.java-version.outputs.java }} -Pbuild.invoker=CI --info --stacktrace

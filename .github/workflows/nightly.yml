@@ -1,12 +1,16 @@
 name: CI
+
 on:
   push:
     branches:
       - master
-  pull_request:
   workflow_dispatch:
   schedule:
     - cron: "0 2 * * *"
+
+env:
+  ECLIPSE_LATEST: "4.34"
+
 jobs:
   sanity-check:
     runs-on: ubuntu-latest
@@ -15,82 +19,97 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
-          develocity-access-key: ${{ secrets.DEVELOCITY_ACCESS_KEY }}
+          develocity-access-key: ${{ secrets.DEVELOCITY_API_KEY }}
       - uses: ./.github/actions/run-build
         with:
           name: "Sanity check"
           os: "ubuntu-latest"
           command: "clean assemble checkstyleMain"
-          eclipse: "4.34"
+          eclipse: ${{ env.ECLIPSE_LATEST }}
+
+  matrix-compute:
+    runs-on: ubuntu-latest
+    outputs:
+      allEclipseVersions: ${{ steps.versions.outputs.allEclipseVersions }}
+      latestEclipse: ${{ steps.versions.outputs.latestEclipse }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: versions
+        run: |
+          versions=$(./.github/scripts/generate_eclipse_versions.py "4.8" "${{ env.ECLIPSE_LATEST }}")
+          echo "allEclipseVersions=${versions}" >> "$GITHUB_OUTPUT"
+          echo 'latestEclipse="${{ env.ECLIPSE_LATEST }}"' >> "$GITHUB_OUTPUT"
+
   basic-test:
-    needs: sanity-check
+    needs:
+      - sanity-check
+      - matrix-compute
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
-        eclipse: ["4.8", "4.34"]
+        eclipse: ["4.8",  "${{ needs.matrix-compute.outputs.latestEclipse }}"]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
-          develocity-access-key: ${{ secrets.DEVELOCITY_ACCESS_KEY }}
+          develocity-access-key: ${{ secrets.DEVELOCITY_API_KEY }}
       - uses: ./.github/actions/run-build
         with:
           name: "Basic test coverage"
           command: "clean eclipseTest"
           os: ${{ matrix.os }}
           eclipse: ${{ matrix.eclipse }}
+
   full-test:
-    needs: basic-test
+    needs:
+      - basic-test
+      - matrix-compute
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        eclipse: ['4.8', '4.9', '4.10', '4.11', '4.12', '4.13', '4.14', '4.15', '4.16', '4.17', '4.18', '4.19', '4.20', '4.21', '4.22', '4.23', '4.24', '4.25', '4.26', '4.27', '4.28', '4.29', '4.30', '4.31', '4.32', '4.33', '4.34']
+        eclipse: ${{ fromJSON(needs.matrix-compute.outputs.allEclipseVersions) }}
         include:
           - os: windows-latest
             eclipse: "4.8"
           - os: windows-latest
-            eclipse: "4.34"
+            eclipse: "${{ needs.matrix-compute.outputs.latestEclipse }}"
+
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
-          develocity-access-key: ${{ secrets.DEVELOCITY_ACCESS_KEY }}
+          develocity-access-key: ${{ secrets.DEVELOCITY_API_KEY }}
       - uses: ./.github/actions/run-build
         with:
           name: "Full test coverage"
           command: "clean build"
           os: ${{ matrix.os }}
           eclipse: ${{ matrix.eclipse }}
+
   cross-version-test:
-    needs: full-test
+    needs:
+      - full-test
+      - matrix-compute
     strategy:
       fail-fast: false
       matrix:
-        eclipse: ["4.23"]
-        java: ["11", "12", "13", "14", "15", "16", "17"]
-        include:
-          - eclipse: "4.8"
-            java: "11"
-          - eclipse: "4.34"
-            java: "17"
+        eclipse: ["4.8", "4.16", "4.17", "4.24", "4.25", "${{ needs.matrix-compute.outputs.latestEclipse }}"]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
-          develocity-access-key: ${{ secrets.DEVELOCITY_ACCESS_KEY }}
+          develocity-access-key: ${{ secrets.DEVELOCITY_API_KEY }}
       - uses: ./.github/actions/run-build
         with:
           name: "Cross-version test coverage"
           command: "clean crossVersionEclipseTest"
           os: "ubuntu-latest"
           eclipse: ${{ matrix.eclipse }}
-          java: ${{ matrix.java }}
-          java-dist: "liberica"

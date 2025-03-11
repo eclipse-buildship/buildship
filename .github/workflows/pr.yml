@@ -1,0 +1,83 @@
+name: PR
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+env:
+  ECLIPSE_LATEST: "4.34"
+
+jobs:
+  sanity-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          develocity-access-key: ${{ secrets.DEVELOCITY_API_KEY }}
+      - uses: ./.github/actions/run-build
+        with:
+          name: "Sanity check"
+          os: "ubuntu-latest"
+          command: "clean assemble checkstyleMain"
+          eclipse: ${{ env.ECLIPSE_LATEST }}
+
+  matrix-compute:
+    runs-on: ubuntu-latest
+    outputs:
+      latestEclipse: ${{ steps.versions.outputs.latestEclipse }}
+    steps:
+      - id: versions
+        run: echo 'latestEclipse="${{ env.ECLIPSE_LATEST }}"' >> "$GITHUB_OUTPUT"
+
+  basic-test:
+    needs:
+      - sanity-check
+      - matrix-compute
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        eclipse: ["4.8", "${{ needs.matrix-compute.outputs.latestEclipse }}"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          develocity-access-key: ${{ secrets.DEVELOCITY_API_KEY }}
+      - uses: ./.github/actions/run-build
+        with:
+          name: "Basic test coverage"
+          command: "clean eclipseTest"
+          os: ${{ matrix.os }}
+          eclipse: ${{ matrix.eclipse }}
+
+  full-test:
+    needs:
+      - basic-test
+      - matrix-compute
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        eclipse: ["4.8", "4.16", "4.17", "4.24", "4.25", "${{ needs.matrix-compute.outputs.latestEclipse }}"]
+        include:
+          - os: windows-latest
+            eclipse: "4.8"
+          - os: windows-latest
+            eclipse: "${{ needs.matrix-compute.outputs.latestEclipse }}"
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          develocity-access-key: ${{ secrets.DEVELOCITY_API_KEY }}
+      - uses: ./.github/actions/run-build
+        with:
+          name: "Full test coverage"
+          command: "clean build"
+          os: ${{ matrix.os }}
+          eclipse: ${{ matrix.eclipse }}
