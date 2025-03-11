@@ -11,6 +11,7 @@ develocity {
     server = "https://develocity-staging.eclipse.org"
     allowUntrustedServer = false // ensure a trusted certificate is configured
     buildScan {
+        publishing.onlyIf { it.isAuthenticated() }
         obfuscation {
             username { name -> isCI ? 'ci' : 'local' }
             ipAddresses { addresses -> addresses.collect { address -> "0.0.0.0" } }
