@@ -225,7 +225,7 @@ public final class EclipseTestExecuter implements TestExecuter<TestExecutionSpec
         }
 
         try {
-            eclipseJob.get(15, TimeUnit.SECONDS);
+            eclipseJob.get(30, TimeUnit.SECONDS);
         } catch (Exception e) {
             throw new GradleException("Test execution failed", e);
         }
