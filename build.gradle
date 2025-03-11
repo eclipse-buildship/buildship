@@ -77,8 +77,7 @@ eclipseBuild {
 
 def develocityApi = project.extensions.findByName('develocity')
 if (develocityApi) {
-    def version = Config.on(project).getEclipseVersion()
-    def eclipseVersion = version.substring(0, 1) + "." + version.substring(1)
+    def eclipseVersion = Config.on(project).getTargetPlatform().getEclipseVersion()
     develocityApi.getBuildScan().tag("eclipse_${eclipseVersion}")
     if (project.hasProperty('eclipse.test.java.version')) {
         develocityApi.getBuildScan().tag("eclipseTestJdk_${project.getProperty('eclipse.test.java.version')}")
