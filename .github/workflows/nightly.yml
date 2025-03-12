@@ -19,7 +19,7 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
-          develocity-access-key: ${{ secrets.DEVELOCITY_API_KEY }}
+          develocity-access-key: ${{ secrets.DEVELOCITY_API_TOKEN }}
       - uses: ./.github/actions/run-build
         with:
           name: "Sanity check"
@@ -55,7 +55,7 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
-          develocity-access-key: ${{ secrets.DEVELOCITY_API_KEY }}
+          develocity-access-key: ${{ secrets.DEVELOCITY_API_TOKEN }}
       - uses: ./.github/actions/run-build
         with:
           name: "Basic test coverage"
@@ -84,7 +84,7 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
-          develocity-access-key: ${{ secrets.DEVELOCITY_API_KEY }}
+          develocity-access-key: ${{ secrets.DEVELOCITY_API_TOKEN }}
       - uses: ./.github/actions/run-build
         with:
           name: "Full test coverage"
@@ -106,7 +106,7 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
-          develocity-access-key: ${{ secrets.DEVELOCITY_API_KEY }}
+          develocity-access-key: ${{ secrets.DEVELOCITY_API_TOKEN }}
       - uses: ./.github/actions/run-build
         with:
           name: "Cross-version test coverage"
