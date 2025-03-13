@@ -9,8 +9,7 @@ Fragment-Host: org.eclipse.buildship.gradleprop.provider
 Comment: junit has to be a required bundle, otherwise the tests won't launch for headless builds
 Require-Bundle: org.eclipse.swtbot.eclipse.finder,
  org.eclipse.swtbot.junit5_x,
- org.junit.platform.engine,
- org.apache.log4j,
+ junit-platform-engine,
  org.eclipse.jdt.launching,
  org.eclipse.core.resources
 Bundle-ClassPath: .

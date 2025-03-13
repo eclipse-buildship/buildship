@@ -13,10 +13,10 @@ ext.toolingApiBundleVersion = getBundleVersion(toolingApiVersion)
 // define version mapping for the 3rd-party dependencies that are not specific to a particular Eclipse version
 def eclipseVersionAgnosticDependencies = [
         'org.gradle.toolingapi'                : toolingApiBundleVersion,
-        'org.slf4j.api'                        : '1.7.30',
+        'slf4j.api'                            : '2.0.16',
         'org.slf4j.simple'                     : '1.7.30',
         'com.google.guava'                     : "$guavaVersion",
-        'com.google.gson'                      : '2.10.1',
+        'com.google.gson'                      : '2.11.0',
         'org.eclipse.swtbot.eclipse.finder'    : "$swtBotVersion",
         'org.eclipse.swtbot.junit5_x'          : "$swtBotVersion",
         'org.jetbrains.kotlin.bundled-compiler': '0.8.7',
