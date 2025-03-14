@@ -56,7 +56,7 @@ dependencies {
     externalPlugin withEclipseBundle('org.gradle.toolingapi')
 
     // official 3rd party dependencies from Orbit which are already signed and normalized with pack200
-    signedExternalPlugin withEclipseBundle('org.slf4j.api')
+    signedExternalPlugin withEclipseBundle('slf4j.api')
     signedExternalPlugin withEclipseBundle('com.google.gson')
     signedExternalPlugin withEclipseBundle('com.google.guava')
 }

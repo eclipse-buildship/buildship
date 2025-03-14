@@ -21,7 +21,7 @@ Require-Bundle: org.eclipse.buildship.core,
  org.eclipse.jface.databinding,
  org.eclipse.jface.text,
  com.ibm.icu,
- com.google.guava;bundle-version="33.0.0",
+ com.google.guava;bundle-version="33.3.1",
  org.gradle.toolingapi;bundle-version="[8.9.0,8.10.0)",
  org.eclipse.ui.workbench.texteditor,
  org.eclipse.compare
