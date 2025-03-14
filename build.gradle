@@ -10,18 +10,11 @@ apply plugin: eclipsebuild.BuildDefinitionPlugin
 
 ext.toolingApiBundleVersion = getBundleVersion(toolingApiVersion)
 
+// TODO pin down java version and fail if build runs with non-11 version
+
 // define version mapping for the 3rd-party dependencies that are not specific to a particular Eclipse version
 def eclipseVersionAgnosticDependencies = [
-        'org.gradle.toolingapi'                : toolingApiBundleVersion,
-        'slf4j.api'                            : '2.0.16',
-        'org.slf4j.simple'                     : '1.7.30',
-        'com.google.guava'                     : "$guavaVersion",
-        'com.google.gson'                      : '2.11.0',
-        'org.eclipse.swtbot.eclipse.finder'    : "$swtBotVersion",
-        'org.eclipse.swtbot.junit5_x'          : "$swtBotVersion",
-        'org.jetbrains.kotlin.bundled-compiler': '0.8.7',
-        'org.jetbrains.kotlin.core'            : '0.8.7',
-        'org.apache.log4j'                     : '1.2.25'
+        'org.gradle.toolingapi'                : toolingApiBundleVersion
 ]
 
 def targetPlatformIds = [
