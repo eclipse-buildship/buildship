@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2023 Gradle Inc. and others
+ * Copyright (c) 2023, 2025 Gradle Inc. and others
  *
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
@@ -214,7 +214,6 @@ public final class GradleDistributionGroup extends Group {
         for (Button radioButton : allRadioButtons) {
             if (radioButton.equals(selectedRadioButton)) {
                 radioButton.setSelection(true);
-                radioButton.setFocus();
             } else {
                 radioButton.setSelection(false);
             }
