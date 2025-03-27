@@ -11,7 +11,6 @@
 
 package eclipsebuild
 
-import eclipsebuild.testing.EclipseTestExecuter
 import eclipsebuild.testing.EclipseTestExtension
 import eclipsebuild.testing.EclipseTestTask
 import org.gradle.api.Plugin
@@ -20,7 +19,6 @@ import org.gradle.api.Task
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier
 import org.gradle.api.internal.file.FileResolver
 import org.gradle.api.tasks.testing.Test
-import org.gradle.internal.operations.BuildOperationExecutor
 
 import javax.inject.Inject
 
@@ -114,15 +112,12 @@ class TestBundlePlugin implements Plugin<Project> {
     }
 
     static Task defineEclipseTestTask(Project project, Config config, String testTaskName, String taskDescription, String integTestVersions) {
-        Test testTask = project.task(testTaskName, type: EclipseTestTask) {
+        Task task = project.task(testTaskName, type: EclipseTestTask) {
             group = Constants.gradleTaskGroupName
             description = taskDescription
 
             // configure the test runner to execute all classes from the project
-            testExecuter = new EclipseTestExecuter(project, services.get(BuildOperationExecutor.class))
-            testClassesDirs =  project.sourceSets.main.output.classesDirs
             classpath = project.sourceSets.main.output + project.sourceSets.test.output
-            reports.html.destination = new File("${project.reporting.baseDir}/eclipseTest")
 
             // set some system properties for the test Eclipse
             systemProperty('osgi.requiredJavaVersion','1.8')
@@ -150,8 +145,8 @@ class TestBundlePlugin implements Plugin<Project> {
             doFirst { beforeEclipseTest(project, config, testDistributionDir, additionalPluginsDir) }
         }
 
-        testTask.dependsOn 'test'
-        testTask.dependsOn 'jar'
+        task.dependsOn 'test'
+        task.dependsOn 'jar'
     }
 
     static void beforeEclipseTest(Project project, Config config, File testDistributionDir, File additionalPluginsDir) {

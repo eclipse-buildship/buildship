@@ -28,6 +28,7 @@ import org.codehaus.classworlds.DuplicateRealmException
 import org.codehaus.plexus.PlexusContainer
 import org.codehaus.plexus.PlexusContainerException
 import org.codehaus.plexus.embed.Embedder
+import groovy.ant.AntBuilder
 
 /**
  * Deploys OSGI bundle (jar or directory) to maven repository

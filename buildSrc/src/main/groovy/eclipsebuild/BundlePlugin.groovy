@@ -85,7 +85,7 @@ class BundlePlugin implements Plugin<Project> {
 
         // add sources jar task
         project.task('sourcesJar', type: Jar, dependsOn: 'classes') {
-            classifier = 'sources'
+            archiveClassifier = 'sources'
             from project.sourceSets.main.allSource
         }
         project.artifacts { archives project.tasks.sourcesJar }
