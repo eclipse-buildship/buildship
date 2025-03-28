@@ -42,6 +42,11 @@ runs:
           echo "java=17"  >> "$GITHUB_OUTPUT"
         fi
 
+    - name: Install Xvfb
+      if: runner.os == 'Linux'
+      shell: bash
+      run: sudo apt-get install -y xvfb 
+
     - name: Set up JDK
       uses: actions/setup-java@v4
       with:
@@ -51,6 +56,12 @@ runs:
     - run: echo "Run ${{ inputs.name }} with Eclipse ${{ inputs.eclipse }} and Java ${{ steps.java-version.outputs.java }} on ${{ inputs.os }}"
       shell: bash
 
+    - name: Run build with Xvfb
+      if: runner.os == 'Linux'
+      shell: bash
+      run: xvfb-run --auto-servernum --server-args='-screen 0 1920x1080x24' ./gradlew ${{ inputs.command }} -Peclipse.version=${{ steps.eclipse-version.outputs.formatted }} -Peclipse.test.java.version=${{ steps.java-version.outputs.java }} -Pbuild.invoker=CI --info --stacktrace
+
     - name: Run build
+      if: runner.os != 'Linux'
       shell: bash
       run: ./gradlew ${{ inputs.command }} -Peclipse.version=${{ steps.eclipse-version.outputs.formatted }} -Peclipse.test.java.version=${{ steps.java-version.outputs.java }} -Pbuild.invoker=CI --info --stacktrace
