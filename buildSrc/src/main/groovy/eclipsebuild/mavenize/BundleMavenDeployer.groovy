@@ -15,6 +15,7 @@
 package eclipsebuild.mavenize
 
 import org.gradle.api.logging.Logger
+import groovy.ant.AntBuilder
 
 /**
  * Converts an Eclipse update site into a Maven repository.
