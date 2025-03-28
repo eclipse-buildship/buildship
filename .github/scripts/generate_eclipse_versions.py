@@ -25,6 +25,7 @@ def generate_versions(start, end):
     major1, minor1 = parse_version_code(start)
     major2, minor2 = parse_version_code(end)
 
+    # Note: this code will break if Eclipse ever 5.0 comes out
     versions = []
     for minor in range(minor1, minor2 + 1):
         # Reconstruct integer code like (4, 10) => 410
