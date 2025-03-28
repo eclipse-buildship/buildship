@@ -127,6 +127,6 @@ public class EclipseTestAdapter {
     }
 
     private String normalize(String input) {
-        return input.replaceAll("[\\\\/:*?\"<>|/\0]", "-");
+        return input.replaceAll("[\\\\/:*?\"<>|/\0]", "-").trim();
     }
 }
