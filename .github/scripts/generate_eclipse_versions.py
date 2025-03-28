@@ -8,22 +8,28 @@ def generate_versions(start, end):
     Generates a list of versions between start and end, inclusive.
 
     Args:
-      start: The starting version (e.g., "4.8").
-      end: The ending version (e.g., "4.34").
+      start: The starting version (e.g., "48").
+      end: The ending version (e.g., "434").
 
     Returns:
       A list of versions as strings.
     """
 
-    start_parts = list(map(int, start.split('.')))
-    end_parts = list(map(int, end.split('.')))
-    current_parts = start_parts[:]  # Create a copy
+    # A helper to parse an integer code like 421 => (4, 21)
+    def parse_version_code(code: int):
+        code_str = str(code)
+        major = int(code_str[0])          # e.g. '4'
+        minor = int(code_str[1:])         # e.g. '21'
+        return major, minor
+
+    major1, minor1 = parse_version_code(start)
+    major2, minor2 = parse_version_code(end)
 
     versions = []
-    while current_parts[0] < end_parts[0] or (current_parts[0] == end_parts[0] and current_parts[1] <= end_parts[1]):
-        versions.append(f"{current_parts[0]}.{current_parts[1]}")
+    for minor in range(minor1, minor2 + 1):
+        # Reconstruct integer code like (4, 10) => 410
+        versions.append(str(major1) + str(minor))
 
-        current_parts[1] += 1
     return versions
 
 if __name__ == "__main__":

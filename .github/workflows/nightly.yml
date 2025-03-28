@@ -9,7 +9,7 @@ on:
     - cron: "0 2 * * *"
 
 env:
-  ECLIPSE_LATEST: "4.34"
+  ECLIPSE_LATEST: "434"
 
 jobs:
   sanity-check:
@@ -36,7 +36,7 @@ jobs:
       - uses: actions/checkout@v4
       - id: versions
         run: |
-          versions=$(./.github/scripts/generate_eclipse_versions.py "4.8" "${{ env.ECLIPSE_LATEST }}")
+          versions=$(./.github/scripts/generate_eclipse_versions.py "48" "${{ env.ECLIPSE_LATEST }}")
           echo "allEclipseVersions=${versions}" >> "$GITHUB_OUTPUT"
           echo 'latestEclipse="${{ env.ECLIPSE_LATEST }}"' >> "$GITHUB_OUTPUT"
 
@@ -48,7 +48,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
-        eclipse: ["4.8",  "${{ needs.matrix-compute.outputs.latestEclipse }}"]
+        eclipse: ["48",  "${{ needs.matrix-compute.outputs.latestEclipse }}"]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -74,7 +74,7 @@ jobs:
         eclipse: ${{ fromJSON(needs.matrix-compute.outputs.allEclipseVersions) }}
         include:
           - os: windows-latest
-            eclipse: "4.8"
+            eclipse: "48"
           - os: windows-latest
             eclipse: "${{ needs.matrix-compute.outputs.latestEclipse }}"
 
@@ -99,7 +99,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        eclipse: ["4.8", "4.16", "4.17", "4.24", "4.25", "${{ needs.matrix-compute.outputs.latestEclipse }}"]
+        eclipse: ["8", "416", "417", "424", "425", "${{ needs.matrix-compute.outputs.latestEclipse }}"]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
