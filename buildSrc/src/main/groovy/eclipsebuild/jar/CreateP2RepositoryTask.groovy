@@ -25,6 +25,7 @@ class CreateP2RepositoryTask extends DefaultTask {
                 '-artifactRepository', targetRepositoryDir.toURI().toURL(),
                 '-source', bundleSourceDir,
                 '-publishArtifacts',
+                '-vm', System.getProperty('java.home') + '/bin/java',
                 '-configs', 'ANY')
         }
     }
