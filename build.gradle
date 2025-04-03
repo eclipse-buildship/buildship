@@ -191,15 +191,11 @@ subprojects {
         inputs.file "$checkstyleConfigDir/suppressions.xml" as File
     }
 
-    tasks.withType(Test).all {
+    tasks.withType(EclipseTestTask).all {
         def java8 = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(8) }
         def java11 = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(11) }
         jvmArgs "-Djdk8.location=${java8.get().metadata.installationPath.asFile}"
         jvmArgs "-Djdk11.location=${java11.get().metadata.installationPath.asFile}"
-
-        // TODO re-enable html test reporting
-        reports.html.enabled = false
-        reports.junitXml.enabled = false
     }
 
     // configure the repositories where the external dependencies can be found

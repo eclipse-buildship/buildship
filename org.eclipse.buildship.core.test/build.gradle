@@ -19,7 +19,7 @@ def compatibilityCheckClassName = 'org.eclipse.buildship.core.internal.workspace
 def compatibilityCheckDescriptorPrefix = 'Can return correct import result with Gradle'
 
 tasks.getByName("crossVersionEclipseTest") {
-    afterTest { TestDescriptor descriptor, TestResult result ->
+    doLast { TestDescriptor descriptor, TestResult result ->
         if (descriptor.className == compatibilityCheckClassName &&
                 descriptor.name.startsWith(compatibilityCheckDescriptorPrefix) &&
                 result.resultType == TestResult.ResultType.FAILURE) {
