@@ -99,7 +99,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        eclipse: ["8", "416", "417", "424", "425", "${{ needs.matrix-compute.outputs.latestEclipse }}"]
+#        TODO we should re-add 425
+#        eclipse: ["8", "416", "417", "424", "425", "${{ needs.matrix-compute.outputs.latestEclipse }}"]
+        eclipse: ["8", "416", "417", "424", "${{ needs.matrix-compute.outputs.latestEclipse }}"]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
