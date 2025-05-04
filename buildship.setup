@@ -20,66 +20,17 @@
     <requirement
         name="org.codehaus.groovy.eclipse.feature.feature.group"/>
     <requirement
-        name="org.eclipse.oomph.setup.sdk.feature.group"/>
-    <requirement
         name="org.eclipse.emf.ecoretools.design.feature.group"/>
     <repository
-        url="https://download.eclipse.org/oomph/updates/release/latest/"/>
-    <description>Installs the required plugins to the IDE.</description>
-  </setupTask>
-  <setupTask
-      xsi:type="setup.p2:P2Task"
-      filter="">
+        url="https://groovy.jfrog.io/artifactory/plugins-release/org/codehaus/groovy/groovy-eclipse-integration/5.7.0/e4.35"/>
     <repository
-        url="https://groovy.jfrog.io/artifactory/plugins-release/org/codehaus/groovy/groovy-eclipse-integration/5.3.0/e4.31"/>
-  </setupTask>
-  <setupTask
-      xsi:type="setup.p2:P2Task"
-      filter="(scope.product.version.name=2023-12)">
+        url="https://groovy.jfrog.io/artifactory/plugins-release/org/codehaus/groovy/groovy-eclipse-integration/5.7.0/e4.34"/>
     <repository
-        url="https://groovy.jfrog.io/artifactory/plugins-release/org/codehaus/groovy/groovy-eclipse-integration/5.3.0/e4.30"/>
-  </setupTask>
-  <setupTask
-      xsi:type="setup.p2:P2Task"
-      filter="(scope.product.version.name=2023-09)">
+        url="https://groovy.jfrog.io/artifactory/plugins-release/org/codehaus/groovy/groovy-eclipse-integration/5.7.0/e4.33"/>
     <repository
-        url="https://groovy.jfrog.io/artifactory/plugins-release/org/codehaus/groovy/groovy-eclipse-integration/5.3.0/e4.29"/>
-  </setupTask>
-  <setupTask
-      xsi:type="setup.p2:P2Task"
-      filter="(scope.product.version.name=2023-06)">
+        url="https://groovy.jfrog.io/artifactory/plugins-release/org/codehaus/groovy/groovy-eclipse-integration/5.7.0/e4.32"/>
     <repository
-        url="https://groovy.jfrog.io/argroovy-eclipse-integration/5.3.0dehaus/groovy/groovy-eclipse-integration/5.3.0/e4.28"/>
-  </setupTask>
-  <setupTask
-      xsi:type="setup.p2:P2Task"
-      filter="(scope.product.version.name=2023-03)">
-    <repository
-        url="https://groovy.jfrog.io/artifactory/plugins-release/org/codehaus/groovy/groovy-eclipse-integration/5.3.0/e4.27"/>
-  </setupTask>
-  <setupTask
-      xsi:type="setup.p2:P2Task"
-      filter="(scope.product.version.name=2022-12)">
-    <repository
-        url="https://groovy.jfrog.io/artifactory/plugins-release/org/codehaus/groovy/groovy-eclipse-integration/5.3.0/e4.26"/>
-  </setupTask>
-  <setupTask
-      xsi:type="setup.p2:P2Task"
-      filter="(scope.product.version.name=2022-09)">
-    <repository
-        url="https://groovy.jfrog.io/artifactory/plugins-release/org/codehaus/groovy/groovy-eclipse-integration/5.3.0/e4.25"/>
-  </setupTask>
-  <setupTask
-      xsi:type="setup.p2:P2Task"
-      filter="(scope.product.version.name=2022-06)">
-    <repository
-        url="https://groovy.jfrog.io/artifactory/plugins-release/org/codehaus/groovy/groovy-eclipse-integration/5.3.0/e4.24"/>
-  </setupTask>
-  <setupTask
-      xsi:type="setup.p2:P2Task"
-      filter="(scope.product.version.name=2022-03)">
-    <repository
-        url="https://groovy.jfrog.io/artifactory/plugins-release/org/codehaus/groovy/groovy-eclipse-integration/5.3.0/e4.23"/>
+        url="https://groovy.jfrog.io/artifactory/plugins-release/org/codehaus/groovy/groovy-eclipse-integration/5.7.0/e4.31"/>
   </setupTask>
   <setupTask
       xsi:type="setup:CompoundTask"
@@ -99,7 +50,7 @@
           xsi:type="setup:EclipseIniTask"
           filter="(!(buildship.oomphtest.enabled=true))"
           option="-Doomph.redirection.buildship"
-          value="=https://raw.githubusercontent.com/eclipse/buildship/master/buildship.setup->${buildship.git.clone.location|uri}/buildship.setup"
+          value="=https://raw.githubusercontent.com/eclipse-buildship/buildship/master/buildship.setup->${buildship.git.clone.location|uri}/buildship.setup"
           vm="true">
         <description>Redirect setup model to check for changes in the local file instead in the url</description>
       </setupTask>
@@ -107,7 +58,7 @@
           xsi:type="setup:EclipseIniTask"
           filter="(buildship.oomphtest.enabled=true)"
           option="-Doomph.redirection.buildship"
-          value="=https://raw.githubusercontent.com/eclipse/buildship/master/buildship.setup->${buildship.oomphtest.setupLocation|uri}"
+          value="=https://raw.githubusercontent.com/eclipse-buildship/buildship/master/buildship.setup->${buildship.oomphtest.setupLocation|uri}"
           vm="true"/>
       <setupTask
           xsi:type="setup:EclipseIniTask"
@@ -1693,7 +1644,7 @@
         xsi:type="setup:VariableTask"
         id="buildship.git.remoteURI"
         name="buildship.git.remoteURI"
-        defaultValue="https://github.com/eclipse/buildship"
+        defaultValue="https://github.com/eclipse-buildship/buildship"
         label="Git remote URI"/>
     <setupTask
         xsi:type="setup:VariableTask"
@@ -1766,7 +1717,7 @@
   <setupTask
       xsi:type="pde:TargetPlatformTask"
       id="buildship.activate.local.target.definition"
-      name="Buildship Eclipse 2024-03 Target Platform">
+      name="Buildship Eclipse 2024-12 Target Platform">
     <description></description>
   </setupTask>
   <stream name="master"
