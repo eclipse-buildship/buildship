@@ -410,6 +410,7 @@ class BuildDefinitionPlugin implements Plugin<Project> {
                     '-roaming',
                     '-nosplash',
                     '-consoleLog',
+                    '-vm', System.getProperty('java.home') + '/bin/java',
                     '-vmargs', '-Declipse.p2.mirror=false')
 
             ignoreExitValue = true
@@ -435,6 +436,7 @@ class BuildDefinitionPlugin implements Plugin<Project> {
                     '-roaming',
                     '-nosplash',
                     '-consoleLog',
+                    '-vm', System.getProperty('java.home') + '/bin/java',
                     '-vmargs', '-Declipse.p2.mirror=false')
         }
     }
