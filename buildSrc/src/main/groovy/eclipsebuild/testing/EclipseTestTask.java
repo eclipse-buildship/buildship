@@ -36,7 +36,6 @@ public abstract class EclipseTestTask extends JavaExec {
     @Inject
     protected abstract TestEventReporterFactory getTestEventReporterFactory();
 
-
     @TaskAction
     @Override
     public void exec() {
@@ -65,7 +64,6 @@ public abstract class EclipseTestTask extends JavaExec {
         LOGGER.info("equinox launcher file {}", equinoxLauncherFile);
 
         ExecFactory execFactory = ((ProjectInternal) getProject()).getServices().get(ExecFactory.class);
-        WorkerLeaseService workerLeaseService = ((ProjectInternal) getProject()).getServices().get(WorkerLeaseService.class);
         final JavaExecAction javaExecHandleBuilder = execFactory.newJavaExecAction();
         javaExecHandleBuilder.setClasspath(this.getProject().files(equinoxLauncherFile));
         javaExecHandleBuilder.getMainClass().set("org.eclipse.equinox.launcher.Main");
