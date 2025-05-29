@@ -129,6 +129,7 @@ subprojects {
             }
             bundled "cglib:cglib-nodep:$cglibLibVersion"
             bundled "org.slf4j:slf4j-simple:$slf4jLibVersion"
+            compileOnly("com.google.errorprone:error_prone_annotations:2.25.0") // Groovy would warn about unknown annotations in Guava classes without this dependency
         }
         if (project.hasProperty('eclipse.test.java.version')) {
             tasks.withType(EclipseTestTask) {
