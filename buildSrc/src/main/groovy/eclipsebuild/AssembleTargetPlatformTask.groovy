@@ -9,6 +9,9 @@ import org.gradle.api.logging.LogLevel
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
+import org.gradle.process.ExecOperations
+
+import javax.inject.Inject
 
 abstract class AssembleTargetPlatformTask extends DefaultTask {
 
@@ -17,6 +20,9 @@ abstract class AssembleTargetPlatformTask extends DefaultTask {
 
     @OutputDirectory
     abstract DirectoryProperty getNonMavenizedTargetPlatformDir()
+
+    @Inject
+    abstract ExecOperations getExecOperations()
 
     @TaskAction
     void assembleTargetPlatform() {
@@ -34,7 +40,7 @@ abstract class AssembleTargetPlatformTask extends DefaultTask {
     void assembleTargetPlatformUnprotected(Project project) {
         // delete the target platform directory to ensure that the P2 Director creates a fresh product
         if (nonMavenizedTargetPlatformDir.get().getAsFile().exists()) {
-            project.logger.info("Delete mavenized platform directory '${nonMavenizedTargetPlatformDir.get().getAsFile()}'")
+            getLogger().info("Delete mavenized platform directory '${nonMavenizedTargetPlatformDir.get().getAsFile()}'")
             nonMavenizedTargetPlatformDir.get().getAsFile().deleteDir()
         }
 
@@ -66,7 +72,7 @@ abstract class AssembleTargetPlatformTask extends DefaultTask {
 
         // invoke the P2 director application to assemble install all features from the target
         // definition file to the target platform: http://help.eclipse.org/luna/index.jsp?topic=%2Forg.eclipse.platform.doc.isv%2Fguide%2Fp2_director.html
-        project.logger.info("Assemble target platfrom in '${nonMavenizedTargetPlatformDir.get().getAsFile().absolutePath}'.\n    Update sites: '${updateSites.join(' ')}'\n    Features: '${features.join(' ')}'")
+        getLogger().info("Assemble target platfrom in '${nonMavenizedTargetPlatformDir.get().getAsFile().absolutePath}'.\n    Update sites: '${updateSites.join(' ')}'\n    Features: '${features.join(' ')}'")
 
         executeP2Director(project, updateSites.join(','), features.join(','))
 
@@ -75,7 +81,7 @@ abstract class AssembleTargetPlatformTask extends DefaultTask {
     }
 
     private void executeP2Director(Project project, String repositoryUrl, String installIU) {
-        project.exec {
+        getExecOperations().exec {
 
             // redirect the external process output to the logging
             standardOutput = new LogOutputStream(project.logger, LogLevel.INFO)
@@ -100,7 +106,7 @@ abstract class AssembleTargetPlatformTask extends DefaultTask {
             ignoreExitValue = true
         }
 
-        project.exec {
+        getExecOperations().exec {
 
             // redirect the external process output to the logging
             standardOutput = new LogOutputStream(project.logger, LogLevel.INFO)

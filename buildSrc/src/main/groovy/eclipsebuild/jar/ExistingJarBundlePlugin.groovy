@@ -125,7 +125,7 @@ class ExistingJarBundlePlugin implements Plugin<Project> {
             pluginConfiguration.convention(getPluginConfiguration(project))
             sourceReference.convention(project.provider { PluginUtils.sourceReference(project) })
             jarFile.convention(project.tasks.named('jar', Jar).flatMap { it.archiveFile })
-            extraResourcesDirectory.convention(project.layout.buildDirectory.dir("tmp/bundle-resources"))
+            extraResourcesDirectory.convention(project.layout.buildDirectory.dir("tmp/bundle-resources").get().getAsFile().absolutePath )
             getProjectName().convention(project.name)
             getAllSrcDirs().convention(project.provider { project.sourceSets.main.allSource.srcDirs })
             getFirstDependencyJar().convention(project.provider { JarBundleUtils.firstDependencyJar(pluginConfiguration.get()) })

@@ -18,7 +18,6 @@ import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier
 import org.gradle.api.internal.file.FileResolver
-import org.gradle.api.tasks.testing.Test
 import org.gradle.process.ExecOperations
 
 import javax.inject.Inject

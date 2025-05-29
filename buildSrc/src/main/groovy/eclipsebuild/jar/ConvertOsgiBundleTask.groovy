@@ -46,8 +46,8 @@ abstract class ConvertOsgiBundleTask extends DefaultTask {
     @InputFile
     abstract RegularFileProperty getJarFile()
 
-    @InputDirectory
-    abstract DirectoryProperty getExtraResourcesDirectory()
+    @Input
+    abstract Property<String> getExtraResourcesDirectory()
 
     @Input
     abstract Property<String> getProjectName()
@@ -68,7 +68,9 @@ abstract class ConvertOsgiBundleTask extends DefaultTask {
 
     void createNewBundle(File dependencyJar, File dependencySourceJar) {
         String manifest = JarBundleUtils.manifestContent([dependencyJar] + getJarFile().get().getAsFile(), template.get(), packageFilter.get(), bundleVersion.get(), qualifier.get(), sourceReference.get())
-        File manifestFile = new File(getExtraResourcesDirectory().get().getAsFile(), '/META-INF/MANIFEST.MF')
+        File resourcesDir = new File(getExtraResourcesDirectory().get())
+
+        File manifestFile = new File(resourcesDir, '/META-INF/MANIFEST.MF')
         manifestFile.parentFile.mkdirs()
         manifestFile.text = manifest
 
@@ -80,7 +82,7 @@ abstract class ConvertOsgiBundleTask extends DefaultTask {
         }
 
         ant.zip(update: 'true', destfile: osgiJar) {
-            fileset(dir: getExtraResourcesDirectory().get().getAsFile())
+            fileset(dir: resourcesDir)
         }
 
         resources.files.each { File resource ->
@@ -101,7 +103,7 @@ abstract class ConvertOsgiBundleTask extends DefaultTask {
         }
 
         ant.zip(update: 'true', destfile: osgiSourceJar) {
-            fileset(dir: getExtraResourcesDirectory().get().getAsFile())
+            fileset(dir: resourcesDir)
         }
 
         resources.files.each { File resource ->
