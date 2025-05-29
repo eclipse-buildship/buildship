@@ -13,6 +13,7 @@ package eclipsebuild
 
 import org.apache.tools.ant.filters.ReplaceTokens
 import org.gradle.api.Project
+import org.gradle.api.plugins.JavaPluginExtension
 
 import java.nio.file.Paths
 
@@ -48,7 +49,7 @@ class PluginUtils {
                         if (entry.key == 'Bundle-Version') {
                             entry.value = project.version
                         } else if (entry.key == 'Bundle-RequiredExecutionEnvironment') {
-                            def targetCompat = project.targetCompatibility.majorVersion
+                            def targetCompat = project.extensions.getByType(JavaPluginExtension).targetCompatibility.majorVersion
                             if (targetCompat == '8') {
                                 entry.value = 'JavaSE-1.8'
                             } else if (targetCompat == '11') {
