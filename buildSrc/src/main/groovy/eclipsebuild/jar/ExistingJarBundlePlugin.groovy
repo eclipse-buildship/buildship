@@ -1,6 +1,7 @@
 package eclipsebuild.jar
 
 import eclipsebuild.BuildDefinitionPlugin
+import eclipsebuild.Config
 import eclipsebuild.Constants
 import eclipsebuild.PluginUtils
 import org.gradle.api.Plugin
@@ -134,12 +135,13 @@ class ExistingJarBundlePlugin implements Plugin<Project> {
 
     private void addCreateP2RepositoryTask(Project project) {
          def task = project.tasks.create(TASK_NAME_CREATE_P2_REPOSITORY, CreateP2RepositoryTask) {
-            group = Constants.gradleTaskGroupName
-            dependsOn ":${BuildDefinitionPlugin.TASK_NAME_VALIDATE_ECLIPSE_SDK}"
-            dependsOn TASK_NAME_CONVERT_TO_BUNDLE
+             group = Constants.gradleTaskGroupName
+             dependsOn ":${BuildDefinitionPlugin.TASK_NAME_VALIDATE_ECLIPSE_SDK}"
+             dependsOn TASK_NAME_CONVERT_TO_BUNDLE
 
-            bundleSourceDir = new File(project.buildDir, BUNDLES_STAGING_FOLDER)
-            targetRepositoryDir = new File(project.buildDir, P2_REPOSITORY_FOLDER)
+             bundleSourceDir = new File(project.buildDir, BUNDLES_STAGING_FOLDER)
+             eclipseSdkExe.convention(project.provider { Config.on(project).eclipseSdkExe.path })
+             targetRepositoryDir = new File(project.buildDir, P2_REPOSITORY_FOLDER)
         }
     }
 

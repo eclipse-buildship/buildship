@@ -8,4 +8,5 @@ tasks.processResources.doFirst {
 
 dependencies {
     implementation 'org.slf4j:slf4j-api:1.7.2'
+    compileOnly("com.google.errorprone:error_prone_annotations:2.25.0") // Groovy would warn about unknown annotations in Guava classes without this dependency
 }
