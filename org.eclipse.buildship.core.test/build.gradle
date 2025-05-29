@@ -7,6 +7,7 @@ dependencies {
     bundled "org.spockframework:spock-core:$spockLibVersion"
     implementation project(':org.eclipse.buildship.compat')
     api project(':org.eclipse.buildship.core')
+    compileOnly("com.google.errorprone:error_prone_annotations:2.25.0") // Groovy would warn about unknown annotations in Guava classes without this dependency
 }
 
 eclipseTest {
