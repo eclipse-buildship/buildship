@@ -8,9 +8,9 @@ dependencies {
 }
 
 eclipseTest {
-    fragmentHost 'org.eclipse.buildship.oomph'
-    applicationName 'org.eclipse.swtbot.eclipse.core.swtbottestapplication'
-    optionsFile rootProject.project(':org.eclipse.buildship.oomph').file('.options')
+    fragmentHost = 'org.eclipse.buildship.oomph'
+    applicationName = 'org.eclipse.swtbot.eclipse.core.swtbottestapplication'
+    optionsFile = rootProject.project(':org.eclipse.buildship.oomph').file('.options')
     consoleLog = true
 }
 

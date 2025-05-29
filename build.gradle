@@ -207,24 +207,24 @@ subprojects {
     repositories {
         maven {
             name = 'mavenized-target-platform'
-            url "${eclipsebuild.Config.on(project).mavenizedTargetPlatformDir}"
+            url = "${eclipsebuild.Config.on(project).mavenizedTargetPlatformDir}"
         }
 
         mavenCentral()
 
         maven {
             name = 'gradle-snapshots'
-            url gradleSnapshotsRepositoryUrl
+            url = gradleSnapshotsRepositoryUrl
         }
 
         maven {
             name = 'gradle-releases'
-            url gradleReleasesRepositoryUrl
+            url = gradleReleasesRepositoryUrl
         }
 
         maven {
             name = 'gradle-remote'
-            url gradleRemoteRepositoryUrl
+            url = gradleRemoteRepositoryUrl
         }
     }
 }

@@ -10,9 +10,9 @@ dependencies {
 }
 
 eclipseTest {
-    fragmentHost 'org.eclipse.buildship.core'
-    applicationName 'org.eclipse.pde.junit.runtime.coretestapplication'
-    optionsFile rootProject.project(':org.eclipse.buildship.core').file('.options')
+    fragmentHost = 'org.eclipse.buildship.core'
+    applicationName = 'org.eclipse.pde.junit.runtime.coretestapplication'
+    optionsFile = rootProject.project(':org.eclipse.buildship.core').file('.options')
 }
 
 def compatibilityCheckClassName = 'org.eclipse.buildship.core.internal.workspace.ImportingProjectCrossVersionTest'
