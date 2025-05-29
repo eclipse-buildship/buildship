@@ -117,7 +117,8 @@ class UpdateSitePlugin implements Plugin<Project> {
         project.afterEvaluate {
             for (ProjectDependency projectDependency : project.configurations.localPlugin.dependencies.withType(ProjectDependency)) {
               // check if the dependent project is a bundle or feature, once its build script has been evaluated
-              def dependency = projectDependency.dependencyProject
+
+              def dependency = project.project(projectDependency.path)
                 if (dependency.plugins.hasPlugin(BundlePlugin)) {
                     copyBundlesTask.inputs.files dependency.tasks.jar.outputs.files
                     copyBundlesTask.inputs.files dependency.tasks.sourcesJar.outputs.files
@@ -135,7 +136,7 @@ class UpdateSitePlugin implements Plugin<Project> {
         project.afterEvaluate {
             for (ProjectDependency projectDependency : project.configurations.localFeature.dependencies.withType(ProjectDependency)) {
               // check if the dependent project is a bundle or feature, once its build script has been evaluated
-              def dependency = projectDependency.dependencyProject
+                def dependency = project.project(projectDependency.path)
                 if (dependency.plugins.hasPlugin(FeaturePlugin)) {
                     copyBundlesTask.inputs.files dependency.tasks.jar.outputs.files
                 } else {
@@ -164,7 +165,7 @@ class UpdateSitePlugin implements Plugin<Project> {
         // iterate over all the project dependencies to populate the update site with the plugins and features
         project.logger.info("Copy features and plugins to bundles directory '${rootDir.absolutePath}'")
         for (ProjectDependency projectDependency : project.configurations.localPlugin.dependencies.withType(ProjectDependency)) {
-            def dependency = projectDependency.dependencyProject
+            def dependency = project.project(projectDependency.path)
 
             // copy the output jar for each plugin project dependency
             if (dependency.plugins.hasPlugin(BundlePlugin)) {
@@ -181,7 +182,7 @@ class UpdateSitePlugin implements Plugin<Project> {
         }
 
         for (ProjectDependency projectDependency : project.configurations.localFeature.dependencies.withType(ProjectDependency)) {
-            def dependency = projectDependency.dependencyProject
+            def dependency = project.project(projectDependency.path)
 
             // copy the output jar for each feature project dependency
             if (dependency.plugins.hasPlugin(FeaturePlugin)) {
