@@ -33,7 +33,6 @@ include ':org.eclipse.buildship.site'
 include ':org.eclipse.buildship.branding'
 include ':org.eclipse.buildship.core.test'
 include ':org.eclipse.buildship.ui.test'
-include ':org.eclipse.buildship.testdependencies'
 if (properties['latest'] == 'true') {
     include ':org.eclipse.buildship.gradleprop.provider'
     include ':org.eclipse.buildship.gradleprop.ls'
