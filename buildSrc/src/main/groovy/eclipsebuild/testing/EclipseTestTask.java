@@ -242,7 +242,7 @@ public abstract class EclipseTestTask extends JavaExec {
         Runnable detector;
         final FileTree testClassFiles = testTask.getClasspath().getAsFileTree();
         new EclipsePluginTestClassScanner(testClassFiles, processor).run();
-        LOGGER.warn("collected test class names: {}", processor.classNames);
+        LOGGER.info("collected test class names: {}", processor.classNames);
         return processor.classNames;
     }
 
