@@ -5,7 +5,7 @@ apply plugin: 'eclipse'
 repositories {
     mavenCentral()
     maven {
-        url gradleRemoteRepositoryUrl
+        url = gradleRemoteRepositoryUrl
     }
 }
 
