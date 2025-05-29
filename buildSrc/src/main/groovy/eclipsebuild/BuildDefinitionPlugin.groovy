@@ -22,7 +22,9 @@ import org.gradle.api.attributes.Attribute
 import org.gradle.api.file.Directory
 import org.gradle.api.logging.LogLevel
 import org.gradle.api.provider.Provider
+import org.gradle.process.ExecOperations
 
+import javax.inject.Inject
 import java.nio.charset.StandardCharsets
 
 import static eclipsebuild.Constants.eclipseSdkDownloadClassifier
@@ -124,6 +126,11 @@ class BuildDefinitionPlugin implements Plugin<Project> {
             // convert GStrings to Strings in the versionMapping key to avoid lookup misses
             versionMapping = versionMapping.collectEntries { k, v -> [k.toString(), v] }
         }
+    }
+
+    interface InjectedExecOps {
+        @Inject
+        ExecOperations getExecOps()
     }
 
     // name of the root node in the DSL
@@ -310,7 +317,10 @@ class BuildDefinitionPlugin implements Plugin<Project> {
                 }
             }
 
-            doLast { addExistingJarsToTargetPlatform(project, config) }
+            doLast {
+                def execOps = project.objects.newInstance(InjectedExecOps)
+                addExistingJarsToTargetPlatform(project, config, execOps)
+            }
 
             onlyIf {
                 Task t = project.tasks[TASK_NAME_ASSEMBLE_TARGET_PLATFORM]
@@ -325,23 +335,23 @@ class BuildDefinitionPlugin implements Plugin<Project> {
         }
     }
 
-    static void addExistingJarsToTargetPlatform(Project project, Config config) {
+    static void addExistingJarsToTargetPlatform(Project project, Config config, InjectedExecOps execOps) {
         project.rootProject.allprojects.each { Project p ->
             if (p.plugins.hasPlugin(ExistingJarBundlePlugin)) {
                 String repo = new File(p.buildDir, ExistingJarBundlePlugin.P2_REPOSITORY_FOLDER).toURI().toURL().toString()
-                executeP2Director(p, config, repo, p.extensions.bundleInfo.bundleName.get())
+                executeP2Director(p, config, repo, p.extensions.bundleInfo.bundleName.get(), execOps)
             }
         }
     }
 
-    private static void executeP2Director(Project project, Config config, String repositoryUrl, String installIU) {
-        project.exec {
+    private static void executeP2Director(Project project, Config config, String repositoryUrl, String installIU, InjectedExecOps execOps) {
+        execOps.execOps.exec {
 
             // redirect the external process output to the logging
-            standardOutput = new LogOutputStream(project.logger, LogLevel.INFO)
-            errorOutput = new LogOutputStream(project.logger, LogLevel.INFO)
+            it.standardOutput = new LogOutputStream(project.logger, LogLevel.INFO)
+            it.errorOutput = new LogOutputStream(project.logger, LogLevel.INFO)
 
-            commandLine(config.eclipseSdkExe.path,
+            it.commandLine(config.eclipseSdkExe.path,
                     '-application', 'org.eclipse.equinox.p2.director',
                     '-repository', repositoryUrl,
                     '-uninstallIU', installIU,
@@ -357,16 +367,16 @@ class BuildDefinitionPlugin implements Plugin<Project> {
                     '-consoleLog',
                     '-vmargs', '-Declipse.p2.mirror=false')
 
-            ignoreExitValue = true
+            it.ignoreExitValue = true
         }
 
-        project.exec {
+        execOps.execOps.exec {
 
             // redirect the external process output to the logging
-            standardOutput = new LogOutputStream(project.logger, LogLevel.INFO)
-            errorOutput = new LogOutputStream(project.logger, LogLevel.INFO)
+            it.standardOutput = new LogOutputStream(project.logger, LogLevel.INFO)
+            it.errorOutput = new LogOutputStream(project.logger, LogLevel.INFO)
 
-            commandLine(config.eclipseSdkExe.path,
+            it.commandLine(config.eclipseSdkExe.path,
                     '-application', 'org.eclipse.equinox.p2.director',
                     '-repository', repositoryUrl,
                     '-installIU', installIU,
