@@ -2,6 +2,7 @@ package eclipsebuild.jar
 
 import eclipsebuild.BuildDefinitionPlugin
 import eclipsebuild.Constants
+import eclipsebuild.PluginUtils
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
@@ -10,6 +11,7 @@ import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.FileCollection
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.provider.Property
+import org.gradle.api.tasks.bundling.Jar
 import org.gradle.plugins.ide.eclipse.EclipsePlugin
 import org.gradle.plugins.ide.eclipse.model.Library
 
@@ -120,6 +122,13 @@ class ExistingJarBundlePlugin implements Plugin<Project> {
             outputDirectory.convention(project.layout.buildDirectory.dir("$BUNDLES_STAGING_FOLDER/plugins"))
             outputSourceDirectory.convention(project.layout.buildDirectory.dir("$BUNDLES_STAGING_FOLDER/plugin-sources"))
             pluginConfiguration.convention(getPluginConfiguration(project))
+            sourceReference.convention(project.provider { PluginUtils.sourceReference(project) })
+            jarFile.convention(project.tasks.named('jar', Jar).flatMap { it.archiveFile })
+            extraResourcesDirectory.convention(project.layout.buildDirectory.dir("tmp/bundle-resources"))
+            getProjectName().convention(project.name)
+            getAllSrcDirs().convention(project.provider { project.sourceSets.main.allSource.srcDirs })
+            getFirstDependencyJar().convention(project.provider { JarBundleUtils.firstDependencyJar(pluginConfiguration.get()) })
+            getFirstDependencySourceJar().convention(project.provider { JarBundleUtils.firstDependencySourceJar(project, pluginConfiguration.get()) })
         }
     }
 
