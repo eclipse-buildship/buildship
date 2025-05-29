@@ -341,7 +341,7 @@ String getBundleVersion(String version) {
 def currentCommitId() {
     def gitVersion = providers.exec {
         commandLine('git', 'rev-parse', '--verify', 'HEAD')
-    }.standardOutput.asText.get()
+    }.standardOutput.asText.get().trim()
 }
 
 def readVersionMapping(File propertiesFile, String swtPluginId) {
