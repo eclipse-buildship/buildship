@@ -18,7 +18,6 @@ import org.gradle.api.tasks.JavaExec;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.api.tasks.testing.TestEventReporterFactory;
 import org.gradle.internal.work.WorkerLeaseService;
-import org.gradle.jvm.toolchain.JavaToolchainService;
 import org.gradle.process.ExecResult;
 import org.gradle.process.internal.ExecFactory;
 import org.gradle.process.internal.JavaExecAction;
@@ -26,8 +25,6 @@ import org.gradle.process.internal.JavaExecAction;
 import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.regex.Pattern;
@@ -55,7 +52,7 @@ public abstract class EclipseTestTask extends JavaExec {
     private void runPDETestsInEclipse(final int pdeTestPort) {
 
         ExecutorService threadPool = Executors.newFixedThreadPool(2);
-        File runDir = new File(getProject().getBuildDir(), getName());
+        File runDir = getProject().getLayout().getBuildDirectory().dir(getName()).get().getAsFile();
 
         File testEclipseDir = new File(getProject().property("buildDir") + "/eclipseTest/eclipse");
 
@@ -101,7 +98,7 @@ public abstract class EclipseTestTask extends JavaExec {
         programArgs.add("org.eclipse.jdt.junit5.runtime");
         programArgs.add("-classNames");
 
-        List<String> testNames = new ArrayList(collectTestNames(this));
+        List<String> testNames = new ArrayList<>(collectTestNames(this));
         Collections.sort(testNames);
         programArgs.addAll(testNames);
 
@@ -166,7 +163,7 @@ public abstract class EclipseTestTask extends JavaExec {
         }
 
         javaExecHandleBuilder.setJvmArgs(jvmArgs);
-        javaExecHandleBuilder.setWorkingDir(getProject().getBuildDir());
+        javaExecHandleBuilder.setWorkingDir(getProject().getLayout().getBuildDirectory().getAsFile());
 
         final CountDownLatch latch = new CountDownLatch(1);
         Future<?> eclipseJob = threadPool.submit(new Runnable() {
