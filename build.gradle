@@ -85,47 +85,6 @@ version = baseVersion + '.' + versionQualifier
 // ensure that the assembleTargetPlatform is executed when the gradle.properties file is changed
 project.assembleTargetPlatform.inputs.file file('gradle.properties')
 
-// delete the org.eclipse.core.runtime.compatibility.registry plugin from the target platform
-// it causes classpath issues when the the Spock tests are running with Groovy 2.4; only
-// contains files to provide 2.x compatibility hence it's safe to remove
-project.assembleTargetPlatform.doLast {
-    def config = Config.on(project)
-    if (config.targetPlatform.eclipseVersion in ['43', '44', '45']) {
-        def registryPluginId = 'org.eclipse.core.runtime.compatibility.registry'
-
-        project.exec {
-            // redirect the external process output to the logging
-            standardOutput = new LogOutputStream(project.logger, LogLevel.INFO)
-            errorOutput = new LogOutputStream(project.logger, LogLevel.INFO)
-
-            commandLine(config.eclipseSdkExe.path,
-                    '-application', 'org.eclipse.equinox.p2.director',
-                    '-uninstallIU', registryPluginId,
-                    '-tag', 'target-platform-2',
-                    '-destination', config.nonMavenizedTargetPlatformDir.path,
-                    '-profile', 'SDKProfile',
-                    '-bundlepool', config.nonMavenizedTargetPlatformDir.path,
-                    '-p2.os', Constants.os,
-                    '-p2.ws', Constants.ws,
-                    '-p2.arch', Constants.arch,
-                    '-roaming',
-                    '-nosplash')
-        }
-
-        def bundlesInfo = new File(config.nonMavenizedTargetPlatformDir, 'configuration/org.eclipse.equinox.simpleconfigurator/bundles.info')
-        def updatedInfo = ''
-        bundlesInfo.withReader { reader ->
-            def line
-            while (line = reader.readLine()) {
-                if (!line.contains(registryPluginId)) {
-                    updatedInfo += line + '\n'
-                }
-            }
-        }
-        bundlesInfo.text = updatedInfo
-    }
-}
-
 subprojects {
     // set the calculated version on all projects in the hierarchy
     version = rootProject.version
