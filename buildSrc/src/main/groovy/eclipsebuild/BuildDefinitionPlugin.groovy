@@ -26,6 +26,7 @@ import org.gradle.api.provider.Provider
 import java.nio.charset.StandardCharsets
 
 import static eclipsebuild.Constants.eclipseSdkDownloadClassifier
+import static eclipsebuild.Constants.getEclipseExePath
 import static eclipsebuild.UnPack.ARTIFACT_TYPE_NAME
 
 /**
@@ -252,18 +253,18 @@ class BuildDefinitionPlugin implements Plugin<Project> {
     }
 
     static void addTaskAssembleTargetPlatform(Project project, Config config) {
-        project.task(TASK_NAME_ASSEMBLE_TARGET_PLATFORM, dependsOn: [
-                TASK_NAME_VALIDATE_ECLIPSE_SDK,
-        ]) {
+        project.tasks.create(TASK_NAME_ASSEMBLE_TARGET_PLATFORM, AssembleTargetPlatformTask) {
+            dependsOn(TASK_NAME_VALIDATE_ECLIPSE_SDK)
             group = Constants.gradleTaskGroupName
             description = "Assembles an Eclipse distribution based on the target platform definition."
-            project.afterEvaluate { inputs.file config.targetPlatform.targetDefinition }
-            project.afterEvaluate { outputs.dir config.nonMavenizedTargetPlatformDir }
 
-            doLast { assembleTargetPlatform(project, config) }
+            project.afterEvaluate {
+                getTargetPlatformFile().set(config.targetPlatform.targetDefinition as File)
+                getNonMavenizedTargetPlatformDir().set(config.nonMavenizedTargetPlatformDir)
+            }
 
             onlyIf {
-                String hash = targetPlatformHash(project, config)
+                String hash = targetPlatformHash(project, config.targetPlatform.targetDefinition.text)
                 File digestFile = new File(config.nonMavenizedTargetPlatformDir, 'digest')
 
                 if (!digestFile.exists()) {
@@ -280,7 +281,7 @@ class BuildDefinitionPlugin implements Plugin<Project> {
         }
     }
 
-    static String targetPlatformHash(Project project, Config config) {
+    static String targetPlatformHash(Project project, String targetDefinitionText) {
         HashFunction sha512HashFunction = Hashing.sha512()
         String manifests = project.rootProject.allprojects
                 .findAll { p -> p.plugins.hasPlugin(ExistingJarBundlePlugin) }
@@ -288,8 +289,7 @@ class BuildDefinitionPlugin implements Plugin<Project> {
                 .collect { p -> p.file("META-INF/MANIFEST.MF").exists() ? p.file("META-INF/MANIFEST.MF").text : null }
                 .findAll { it != null }
                 .join("\n")
-        String targetDef = config.targetPlatform.targetDefinition.text
-        String hashInput = manifests + "\n" + targetDef
+        String hashInput = manifests + "\n" + targetDefinitionText
         return sha512HashFunction.hashString(hashInput, StandardCharsets.UTF_8)
     }
 
@@ -325,18 +325,6 @@ class BuildDefinitionPlugin implements Plugin<Project> {
         }
     }
 
-    static void assembleTargetPlatform(Project project, Config config) {
-        // if multiple builds start on the same machine (which is the case with a CI server)
-        // we want to prevent them assembling the same target platform at the same time
-        def lock = new FileSemaphore(config.nonMavenizedTargetPlatformDir)
-        try {
-            lock.lock()
-            assembleTargetPlatformUnprotected(project, config)
-        } finally {
-            lock.unlock()
-        }
-    }
-
     static void addExistingJarsToTargetPlatform(Project project, Config config) {
         project.rootProject.allprojects.each { Project p ->
             if (p.plugins.hasPlugin(ExistingJarBundlePlugin)) {
@@ -344,49 +332,6 @@ class BuildDefinitionPlugin implements Plugin<Project> {
                 executeP2Director(p, config, repo, p.extensions.bundleInfo.bundleName.get())
             }
         }
-    }
-
-    static void assembleTargetPlatformUnprotected(Project project, Config config) {
-        // delete the target platform directory to ensure that the P2 Director creates a fresh product
-        if (config.nonMavenizedTargetPlatformDir.exists()) {
-            project.logger.info("Delete mavenized platform directory '${config.nonMavenizedTargetPlatformDir}'")
-            config.nonMavenizedTargetPlatformDir.deleteDir()
-        }
-
-        // repository mirrors
-        def mirrors = [:]
-        if (project.hasProperty('repository.mirrors')) {
-            String allMirrors = project.property('repository.mirrors')
-            allMirrors.split(',').each {
-                if (!it.contains("->")) {
-                    throw new RuntimeException("Mirrors should be denoted as sourceUrl->targetUrl")
-                }
-                def mirror = it.split('->')
-                mirrors[mirror[0]] = mirror[1]
-            }
-        }
-
-        // collect  update sites and feature names
-        def updateSites = []
-        def features = []
-        def rootNode = new XmlSlurper().parseText(config.targetPlatform.targetDefinition.text)
-        rootNode.locations.location.each { location ->
-            String siteUrl = location.repository.@location.text().replace('\${project_loc}', 'file://' + project.projectDir.absolutePath)
-            if (mirrors[siteUrl]) {
-                updateSites.add(mirrors[siteUrl])
-            }
-            updateSites.add(siteUrl)
-            location.unit.each { unit -> features.add("${unit.@id}/${unit.@version}") }
-        }
-
-        // invoke the P2 director application to assemble install all features from the target
-        // definition file to the target platform: http://help.eclipse.org/luna/index.jsp?topic=%2Forg.eclipse.platform.doc.isv%2Fguide%2Fp2_director.html
-        project.logger.info("Assemble target platfrom in '${config.nonMavenizedTargetPlatformDir.absolutePath}'.\n    Update sites: '${updateSites.join(' ')}'\n    Features: '${features.join(' ')}'")
-
-        executeP2Director(project, config, updateSites.join(','), features.join(','))
-
-        config.nonMavenizedTargetPlatformDir.mkdirs()
-        new File(config.nonMavenizedTargetPlatformDir, 'digest').text = targetPlatformHash(project, config)
     }
 
     private static void executeP2Director(Project project, Config config, String repositoryUrl, String installIU) {
