@@ -29,6 +29,7 @@ import org.codehaus.plexus.PlexusContainer
 import org.codehaus.plexus.PlexusContainerException
 import org.codehaus.plexus.embed.Embedder
 import groovy.ant.AntBuilder
+import org.codehaus.plexus.logging.Logger
 
 /**
  * Deploys OSGI bundle (jar or directory) to maven repository
@@ -106,6 +107,7 @@ class DeployMavenExecutor {
             classWorld.newRealm("plexus.core", getClass().getClassLoader())
             Embedder embedder = new Embedder()
             embedder.start(classWorld)
+            embedder.getContainer().getLoggerManager().setThreshold(Logger.LEVEL_WARN)
             return embedder.getContainer()
         }
         catch (PlexusContainerException e) {
