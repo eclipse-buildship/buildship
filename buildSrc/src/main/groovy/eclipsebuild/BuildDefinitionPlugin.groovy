@@ -445,11 +445,11 @@ class BuildDefinitionPlugin implements Plugin<Project> {
             description = "Converts the assembled Eclipse distribution to a Maven repository."
             project.afterEvaluate { inputs.dir config.nonMavenizedTargetPlatformDir }
             project.afterEvaluate { outputs.dir config.mavenizedTargetPlatformDir }
-            doLast { installTargetPlatform(project, config) }
+            doLast { installTargetPlatform(project, config, it) }
         }
     }
 
-    static void installTargetPlatform(Project project, Config config) {
+    static void installTargetPlatform(Project project, Config config, Task task) {
         // delete the mavenized target platform directory to ensure that the deployment doesn't
         // have outdated artifacts
         if (config.mavenizedTargetPlatformDir.exists()) {
@@ -459,7 +459,7 @@ class BuildDefinitionPlugin implements Plugin<Project> {
 
         // install bundles
         project.logger.info("Convert Eclipse target platform '${config.nonMavenizedTargetPlatformDir}' to Maven repository '${config.mavenizedTargetPlatformDir}'")
-        def deployer = new BundleMavenDeployer(project.ant, Constants.mavenizedEclipsePluginGroupName, project.logger)
+        def deployer = new BundleMavenDeployer(task.ant, Constants.mavenizedEclipsePluginGroupName, project.logger)
         deployer.deploy(config.nonMavenizedTargetPlatformDir, config.mavenizedTargetPlatformDir)
     }
 

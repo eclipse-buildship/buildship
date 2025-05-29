@@ -13,6 +13,7 @@ package eclipsebuild
 
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.Task
 import org.gradle.api.artifacts.ProjectDependency
 import org.gradle.api.file.FileCollection
 import org.gradle.api.plugins.JavaPlugin
@@ -110,7 +111,7 @@ class UpdateSitePlugin implements Plugin<Project> {
             group = Constants.gradleTaskGroupName
             description = 'Collects the bundles that make up the update site.'
             outputs.dir new File(project.buildDir, UNSIGNED_BUNDLES_DIR_NAME)
-            doLast { copyBundles(project) }
+            doLast { copyBundles(project, it) }
         }
 
         // add inputs for each plugin/feature project once this build script has been evaluated (before that, the dependencies are empty)
@@ -151,7 +152,7 @@ class UpdateSitePlugin implements Plugin<Project> {
         }
     }
 
-    static void copyBundles(Project project) {
+    static void copyBundles(Project project, Task task) {
         def rootDir = new File(project.buildDir, UNSIGNED_BUNDLES_DIR_NAME)
         def pluginsDir = new File(rootDir, PLUGINS_DIR_NAME)
         def featuresDir = new File(rootDir, FEATURES_DIR_NAME)
@@ -204,7 +205,7 @@ class UpdateSitePlugin implements Plugin<Project> {
             // extract the jars and delete the the sums from the manifest file
             pluginsDir.eachFile { jar ->
                 def extractedJar = new File(jar.parentFile, jar.name + ".u")
-                project.ant.unzip(src: jar, dest: new File(jar.parentFile, jar.name + ".u"))
+                task.ant.unzip(src: jar, dest: new File(jar.parentFile, jar.name + ".u"))
                 jar.delete()
                 def manifest = new File(extractedJar, "META-INF/MANIFEST.MF")
                 removeSignaturesFromManifest(manifest)
@@ -212,7 +213,7 @@ class UpdateSitePlugin implements Plugin<Project> {
             // re-jar the content without the signature files
             pluginsDir.eachFile { extractedJar ->
                 def jar = new File(extractedJar.parentFile, extractedJar.name.substring(0, extractedJar.name.length() - 2))
-                project.ant.zip(destfile: jar, basedir: extractedJar) {
+                task.ant.zip(destfile: jar, basedir: extractedJar) {
                     exclude(name: '**/*.RSA')
                     exclude(name: '**/*.DSA')
                     exclude(name: '**/*.SF')
@@ -298,13 +299,13 @@ class UpdateSitePlugin implements Plugin<Project> {
                 inputs.files project.updateSite.extraResources
                 inputs.dir new File(project.buildDir, COMPRESSED_BUNDLES_DIR_NAME)
                 outputs.dir new File(project.buildDir, REPOSITORY_DIR_NAME)
-                doLast { createP2Repository(project) }
+                doLast { createP2Repository(project, it) }
         }
 
         project.tasks.assemble.dependsOn createP2RepositoryTask
     }
 
-    static void createP2Repository(Project project) {
+    static void createP2Repository(Project project, Task task) {
         def repositoryDir = new File(project.buildDir, REPOSITORY_DIR_NAME)
 
         // delete old content
@@ -319,7 +320,7 @@ class UpdateSitePlugin implements Plugin<Project> {
         // add custom properties to the artifacts.xml file
         def mutateArtifactsXml = project.updateSite.mutateArtifactsXml
         if (mutateArtifactsXml) {
-            updateArtifactsXmlFromArchive(project, repositoryDir, mutateArtifactsXml)
+            updateArtifactsXmlFromArchive(project, repositoryDir, mutateArtifactsXml, task)
         }
     }
 
@@ -361,7 +362,7 @@ class UpdateSitePlugin implements Plugin<Project> {
         }
     }
 
-    static void updateArtifactsXmlFromArchive(Project project, File repositoryLocation, Closure mutateArtifactsXml) {
+    static void updateArtifactsXmlFromArchive(Project project, File repositoryLocation, Closure mutateArtifactsXml, Task task) {
         // get the artifacts.xml file from the artifacts.jar
         def artifactsJarFile = new File(repositoryLocation, "artifacts.jar")
         def artifactsXmlFile = project.zipTree(artifactsJarFile).matching { 'artifacts.xml' }.singleFile
@@ -375,7 +376,7 @@ class UpdateSitePlugin implements Plugin<Project> {
         // write the updated artifacts.xml back to its source
         // the artifacts.xml is a temporary file hence it has to be copied back to the archive
         new XmlNodePrinter(new PrintWriter(new FileWriter(artifactsXmlFile)), "  ", "'").print(xml)
-        project.ant.zip(update: true, filesonly: true, destfile: artifactsJarFile) { fileset(file: artifactsXmlFile) }
+        task.ant.zip(update: true, filesonly: true, destfile: artifactsJarFile) { fileset(file: artifactsXmlFile) }
     }
 
     static void validateRequiredFilesExist(Project project) {
