@@ -19,7 +19,6 @@ abstract class UnPack implements TransformAction<TransformParameters.None> {
     void transform(TransformOutputs outputs) {
         def input = inputArtifact.get().asFile
         def targetDir = outputs.dir("${input.name}.${ARTIFACT_TYPE_NAME}")
-        println("Unpacking ${input} to ${targetDir}")
         verifySdk256Sum(input)
         unpack(input, targetDir)
         new File(targetDir, Constants.eclipseExePath).setExecutable(true)

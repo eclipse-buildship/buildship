@@ -44,7 +44,6 @@ abstract class ConvertOsgiBundleTask extends DefaultTask {
     }
 
     void createNewBundle(Project project, File dependencyJar, File dependencySourceJar) {
-        println dependencySourceJar.absolutePath
         String sourceReference = PluginUtils.sourceReference(project)
         File jarTaskOutput = project.tasks['jar'].outputs.files.asFileTree.files.first()
         String manifest = JarBundleUtils.manifestContent([dependencyJar] + jarTaskOutput, template.get(), packageFilter.get(), bundleVersion.get(), qualifier.get(), sourceReference)
@@ -75,7 +74,6 @@ abstract class ConvertOsgiBundleTask extends DefaultTask {
         File osgiSourceJar = new File(outputSourceDirectory.get().asFile, "osgi_${project.name}.source.jar")
         project.ant.zip(destfile: osgiSourceJar) {
             project.sourceSets.main.allSource.srcDirs.forEach { File srcDir ->
-                println srcDir
                 if (srcDir.exists()) {
                     fileset(dir: srcDir.absolutePath, excludes: 'META-INF/MANIFEST.MF')
                 }
