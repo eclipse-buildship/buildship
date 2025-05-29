@@ -17,6 +17,9 @@ import org.gradle.api.Task
 import org.gradle.api.artifacts.ProjectDependency
 import org.gradle.api.file.FileCollection
 import org.gradle.api.plugins.JavaPlugin
+import org.gradle.process.ExecOperations
+
+import javax.inject.Inject
 
 /**
  * Gradle plugin for building Eclipse update sites.
@@ -258,6 +261,11 @@ class UpdateSitePlugin implements Plugin<Project> {
         }
     }
 
+    interface InjectedExecOps {
+        @Inject
+        ExecOperations getExecOps()
+    }
+
     static void addTaskCompressBundles(Project project) {
         project.task(COMPRESS_BUNDLES_TASK_NAME, dependsOn: [
             COPY_BUNDLES_TASK_NAME, SIGN_BUNDLES_TASK_NAME, ":${BuildDefinitionPlugin.TASK_NAME_INSTALL_TARGET_PLATFORM}"]) {
@@ -265,11 +273,14 @@ class UpdateSitePlugin implements Plugin<Project> {
                 description = 'Compresses the bundles that make up the update using the pack200 tool.'
                 project.afterEvaluate { inputs.dir project.updateSite.signing != null ? new File(project.buildDir, SIGNED_BUNDLES_DIR_NAME) : new File(project.buildDir, UNSIGNED_BUNDLES_DIR_NAME) }
                 outputs.dir  new File(project.buildDir, COMPRESSED_BUNDLES_DIR_NAME)
-                doLast { compressBundles(project) }
+                doLast {
+                    InjectedExecOps execOps = project.objects.newInstance(InjectedExecOps)
+                    compressBundles(project, execOps)
+                }
         }
     }
 
-    static void compressBundles(Project project) {
+    static void compressBundles(Project project, InjectedExecOps execOps) {
         File uncompressedBundles = project.updateSite.signing != null ? new File(project.buildDir, SIGNED_BUNDLES_DIR_NAME) : new File(project.buildDir, UNSIGNED_BUNDLES_DIR_NAME)
         File compressedBundles = new File(project.buildDir, COMPRESSED_BUNDLES_DIR_NAME)
 
@@ -280,10 +291,10 @@ class UpdateSitePlugin implements Plugin<Project> {
         }
 
         // compress and store them in the same folder
-        project.javaexec {
-            main = 'org.eclipse.equinox.internal.p2.jarprocessor.Main'
-            classpath Config.on(project).jarProcessorJar
-            args = ['-pack',
+        execOps.execOps.javaexec {
+            it.mainClass.set('org.eclipse.equinox.internal.p2.jarprocessor.Main')
+            it.classpath Config.on(project).jarProcessorJar
+            it.args = ['-pack',
                     '-outputDir', compressedBundles,
                     compressedBundles
             ]
@@ -299,13 +310,16 @@ class UpdateSitePlugin implements Plugin<Project> {
                 inputs.files project.updateSite.extraResources
                 inputs.dir new File(project.buildDir, COMPRESSED_BUNDLES_DIR_NAME)
                 outputs.dir new File(project.buildDir, REPOSITORY_DIR_NAME)
-                doLast { createP2Repository(project, it) }
+                doLast {
+                    InjectedExecOps execOps = project.objects.newInstance(InjectedExecOps)
+                    createP2Repository(project, it, execOps)
+                }
         }
 
         project.tasks.assemble.dependsOn createP2RepositoryTask
     }
 
-    static void createP2Repository(Project project, Task task) {
+    static void createP2Repository(Project project, Task task, InjectedExecOps execOps) {
         def repositoryDir = new File(project.buildDir, REPOSITORY_DIR_NAME)
 
         // delete old content
@@ -315,7 +329,7 @@ class UpdateSitePlugin implements Plugin<Project> {
         }
 
         // create the P2 update site
-        publishContentToLocalP2Repository(project, repositoryDir)
+        publishContentToLocalP2Repository(project, repositoryDir, execOps)
 
         // add custom properties to the artifacts.xml file
         def mutateArtifactsXml = project.updateSite.mutateArtifactsXml
@@ -324,13 +338,13 @@ class UpdateSitePlugin implements Plugin<Project> {
         }
     }
 
-    static void publishContentToLocalP2Repository(Project project, File repositoryDir) {
+    static void publishContentToLocalP2Repository(Project project, File repositoryDir, InjectedExecOps execOps) {
         def rootDir = new File(project.buildDir, COMPRESSED_BUNDLES_DIR_NAME)
 
         // publish features/plugins to the update site
         project.logger.info("Publish plugins and features from '${rootDir.absolutePath}' to the update site '${repositoryDir.absolutePath}'")
-        project.exec {
-            commandLine(Config.on(project).eclipseSdkExe,
+        execOps.execOps.exec {
+            it.commandLine(Config.on(project).eclipseSdkExe,
                     '-nosplash',
                     '-application', 'org.eclipse.equinox.p2.publisher.FeaturesAndBundlesPublisher',
                     '-metadataRepository', repositoryDir.toURI().toURL(),
@@ -345,8 +359,8 @@ class UpdateSitePlugin implements Plugin<Project> {
 
         // publish P2 category defined in the category.xml to the update site
         project.logger.info("Publish categories defined in '${project.updateSite.siteDescriptor.absolutePath}' to the update site '${repositoryDir.absolutePath}'")
-        project.exec {
-            commandLine(Config.on(project).eclipseSdkExe,
+        execOps.execOps.exec {
+            it.commandLine(Config.on(project).eclipseSdkExe,
                     '-nosplash',
                     '-application', 'org.eclipse.equinox.p2.publisher.CategoryPublisher',
                     '-metadataRepository', repositoryDir.toURI().toURL(),
