@@ -59,7 +59,7 @@ final class BundleMavenDeployer {
 
   private void collectArtifacts(artifactsSourceDir) {
     def processFile = { File file ->
-      logger.info("Collecting artifacts: ${file.name}")
+      logger.debug("Collecting artifacts: ${file.name}")
       try {
         Bundle2Pom reader = new Bundle2Pom(group: groupIdForBundles, dependencyGroup: groupIdForBundles)
         Pom pom = reader.convert(file)
@@ -88,23 +88,28 @@ final class BundleMavenDeployer {
       }
     }
     logger.info("Reading bundles in $artifactsSourceDir")
+    int count = 0
     try {
       artifactsSourceDir.eachDir processFile
       artifactsSourceDir.eachFileMatch ~/.*\.jar/, processFile
+      artifactsSourceDir.eachDir { count++ }
+      artifactsSourceDir.eachFileMatch ~/.*\.jar/, { count++ }
     } finally {
-      logger.info("Finished reading bundles in $artifactsSourceDir")
+      logger.info("Finished reading ${count} bundles in $artifactsSourceDir")
     }
   }
 
   private void fixDependencies() {
     logger.info('Fixing dependencies')
+    int count = 0
     try {
       artifacts.each { name, artifactVersions ->
-        logger.info("Fixing dependencies: $name")
+        count++
+        logger.debug("Fixing dependencies: $name")
         artifactVersions.each { pom ->
           pom.dependencyBundles.removeAll { reqBundle ->
             if (!artifacts[reqBundle.name.trim()]) {
-              logger.info("Warning: artifact dependency $pom.group:$pom.artifact:$pom.version -> $reqBundle.name could not be resolved.")
+              logger.warn("Artifact dependency $pom.group:$pom.artifact:$pom.version -> $reqBundle.name could not be resolved.")
               return true
             }
             return false
@@ -140,26 +145,29 @@ final class BundleMavenDeployer {
         }
       }
     } finally {
-      logger.info('Finished fixing dependencies')
+      logger.info("Finished fixing ${count} dependencies")
     }
   }
 
   private deployBundles(DeployMavenExecutor executor) {
+    int count = 0
     logger.info('Deploying artifacts')
     try {
       artifacts.each { name, artifactVersions ->
+        count++
         artifactVersions.each { pom ->
           executor.deployBundle pom, artifactFiles["${pom.artifact}:${pom.version}"], sourceFile: sourceFiles["${pom.artifact}:${pom.version}"]
         }
       }
       artifactsNl.each { language, map_nl ->
         map_nl.each { artifactName, pom ->
+          count++
           executor.deployBundle pom, artifactFiles["${pom.artifact}:${pom.version}"]
         }
       }
     } finally {
       executor.cleanup()
-      logger.info('Finished deploying artifacts')
+      logger.info("Finished deploying ${count} artifacts")
     }
   }
 }
