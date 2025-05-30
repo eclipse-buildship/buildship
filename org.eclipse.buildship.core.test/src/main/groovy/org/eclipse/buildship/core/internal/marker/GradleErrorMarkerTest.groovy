@@ -12,6 +12,8 @@ package org.eclipse.buildship.core.internal.marker
 import org.gradle.tooling.BuildException
 
 import org.eclipse.core.resources.IMarker
+import org.eclipse.core.resources.IResource
+import org.eclipse.core.resources.ResourcesPlugin
 import org.eclipse.core.runtime.IStatus
 
 import org.eclipse.buildship.core.GradleDistribution
@@ -20,6 +22,13 @@ import org.eclipse.buildship.core.internal.configuration.WorkspaceConfiguration
 import org.eclipse.buildship.core.internal.test.fixtures.ProjectSynchronizationSpecification
 
 class GradleErrorMarkerTest extends ProjectSynchronizationSpecification {
+
+    def setupSpec() {
+        // delete all markers that might've preserved from a previous test execution
+        for (IMarker marker : ResourcesPlugin.getWorkspace().getRoot().findMarkers(GradleErrorMarker.ID, false, IResource.DEPTH_INFINITE)) {
+            marker.delete();
+        }
+    }
 
     def "Display error marker if synchronization fails"() {
         setup:

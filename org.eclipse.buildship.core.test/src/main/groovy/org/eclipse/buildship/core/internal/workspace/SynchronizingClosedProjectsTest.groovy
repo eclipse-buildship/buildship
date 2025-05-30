@@ -28,7 +28,6 @@ class SynchronizingClosedProjectsTest extends ProjectSynchronizationSpecificatio
     File buildC
 
     def setup() {
-        environment.registerService(ProcessStreamsProvider, new TestProcessStreamProvider() {})
         buildA = dir("buildA") {
             file "build.gradle", """
                 group = 'org.test'
@@ -193,7 +192,7 @@ class SynchronizingClosedProjectsTest extends ProjectSynchronizationSpecificatio
 
     private String getSyncConsoleOutput() {
         TestProcessStreamProvider testStreams = CorePlugin.processStreamsProvider()
-        testStreams.backroundStream.out
+        testStreams.testStream.out
     }
 
     private IRuntimeClasspathEntry[] projectRuntimeClasspath(IJavaProject project) {

@@ -36,6 +36,7 @@ import org.eclipse.buildship.core.GradleDistribution
 import org.eclipse.buildship.core.internal.CorePlugin
 import org.eclipse.buildship.core.internal.configuration.BuildConfiguration
 import org.eclipse.buildship.core.internal.configuration.ConfigurationManager
+import org.eclipse.buildship.core.internal.console.ProcessStreamsProvider
 import org.eclipse.buildship.core.internal.launch.GradleRunConfigurationDelegate
 import org.eclipse.buildship.core.internal.marker.GradleErrorMarker
 import org.eclipse.buildship.core.internal.preferences.DefaultPersistentModel
