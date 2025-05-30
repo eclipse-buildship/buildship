@@ -28,7 +28,6 @@ import javax.inject.Inject
 import java.nio.charset.StandardCharsets
 
 import static eclipsebuild.Constants.eclipseSdkDownloadClassifier
-import static eclipsebuild.Constants.getEclipseExePath
 import static eclipsebuild.UnPack.ARTIFACT_TYPE_NAME
 
 /**
@@ -351,8 +350,8 @@ class BuildDefinitionPlugin implements Plugin<Project> {
         execOps.execOps.exec {
 
             // redirect the external process output to the logging
-            it.standardOutput = new LogOutputStream(project.logger, LogLevel.INFO)
-            it.errorOutput = new LogOutputStream(project.logger, LogLevel.INFO)
+            it.standardOutput = new LogOutputStream(project.getLogger(), LogLevel.INFO, LogOutputStream.Type.STDOUT)
+            it.errorOutput = new LogOutputStream(project.getLogger(), LogLevel.INFO, LogOutputStream.Type.STDERR)
 
             it.commandLine(config.eclipseSdkExe.path,
                     '-application', 'org.eclipse.equinox.p2.director',
@@ -376,8 +375,8 @@ class BuildDefinitionPlugin implements Plugin<Project> {
         execOps.execOps.exec {
 
             // redirect the external process output to the logging
-            it.standardOutput = new LogOutputStream(project.logger, LogLevel.INFO)
-            it.errorOutput = new LogOutputStream(project.logger, LogLevel.INFO)
+            it.standardOutput = new LogOutputStream(project.getLogger(), LogLevel.INFO, LogOutputStream.Type.STDOUT)
+            it.errorOutput = new LogOutputStream(project.getLogger(), LogLevel.INFO, LogOutputStream.Type.STDERR)
 
             it.commandLine(config.eclipseSdkExe.path,
                     '-application', 'org.eclipse.equinox.p2.director',

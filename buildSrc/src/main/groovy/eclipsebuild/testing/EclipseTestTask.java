@@ -3,6 +3,7 @@ package eclipsebuild.testing;
 import com.google.common.io.MoreFiles;
 import com.google.common.io.RecursiveDeleteOption;
 import eclipsebuild.Constants;
+import eclipsebuild.LogOutputStream;
 import org.eclipse.jdt.internal.junit.model.ITestRunListener2;
 import org.eclipse.jdt.internal.junit.model.RemoteTestRunnerClient;
 import org.gradle.api.GradleException;
@@ -12,6 +13,7 @@ import org.gradle.api.file.FileTree;
 import org.gradle.api.internal.tasks.testing.TestClassProcessor;
 import org.gradle.api.internal.tasks.testing.TestClassRunInfo;
 import org.gradle.api.internal.tasks.testing.TestResultProcessor;
+import org.gradle.api.logging.LogLevel;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.tasks.JavaExec;
@@ -165,6 +167,8 @@ public abstract class EclipseTestTask extends JavaExec {
 
         javaExecHandleBuilder.setJvmArgs(jvmArgs);
         javaExecHandleBuilder.setWorkingDir(getProject().getLayout().getBuildDirectory().getAsFile());
+        javaExecHandleBuilder.setStandardOutput(new LogOutputStream(getLogger(), LogLevel.INFO, LogOutputStream.Type.STDOUT));
+        javaExecHandleBuilder.setErrorOutput(new LogOutputStream(getLogger(), LogLevel.INFO, LogOutputStream.Type.STDERR));
 
         final CountDownLatch latch = new CountDownLatch(1);
         Future<?> eclipseJob = threadPool.submit(new Runnable() {

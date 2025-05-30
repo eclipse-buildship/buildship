@@ -92,8 +92,8 @@ abstract class AssembleTargetPlatformTask extends DefaultTask {
         getExecOperations().exec {
 
             // redirect the external process output to the logging
-            it.standardOutput = new LogOutputStream(getLogger(), LogLevel.INFO)
-            it.errorOutput = new LogOutputStream(getLogger(), LogLevel.INFO)
+            it.standardOutput = new LogOutputStream(getLogger(), LogLevel.INFO, LogOutputStream.Type.STDOUT)
+            it.errorOutput = new LogOutputStream(getLogger(), LogLevel.INFO, LogOutputStream.Type.STDERR)
 
             it.commandLine(getEclipseSdkExe().get(),
                 '-application', 'org.eclipse.equinox.p2.director',
@@ -117,8 +117,8 @@ abstract class AssembleTargetPlatformTask extends DefaultTask {
         getExecOperations().exec {
 
             // redirect the external process output to the logging
-            it.standardOutput = new LogOutputStream(project.logger, LogLevel.INFO)
-            it.errorOutput = new LogOutputStream(project.logger, LogLevel.INFO)
+            it.standardOutput = new LogOutputStream(getLogger(), LogLevel.INFO, LogOutputStream.Type.STDOUT)
+            it.errorOutput = new LogOutputStream(getLogger(), LogLevel.INFO, LogOutputStream.Type.STDERR)
 
             it.commandLine(getEclipseSdkExe().get(),
                 '-application', 'org.eclipse.equinox.p2.director',

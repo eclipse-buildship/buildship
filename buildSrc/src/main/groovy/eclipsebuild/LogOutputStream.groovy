@@ -19,17 +19,30 @@ import org.gradle.api.logging.Logger
  */
 class LogOutputStream extends ByteArrayOutputStream {
 
+    enum Type {
+        STDOUT(" | "),
+        STDERR("e| ");
+
+        final String prefix
+
+        Type(String prefix) {
+            this.prefix = prefix
+        }
+    }
+
     private final Logger logger
     private final LogLevel level
+    private final Type type
 
-    public LogOutputStream(Logger logger, LogLevel level) {
+    LogOutputStream(Logger logger, LogLevel level, Type type) {
         this.logger = logger
         this.level = level
+        this.type = type
     }
 
     @Override
-    public void flush() {
-        logger.log(level, toString())
+    void flush() {
+        logger.log(level, toString().stripTrailing().replaceAll(/(?m)^/, type.prefix))
         reset()
     }
 }

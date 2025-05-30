@@ -18,6 +18,7 @@ import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier
 import org.gradle.api.internal.file.FileResolver
+import org.gradle.api.logging.LogLevel
 import org.gradle.process.ExecOperations
 
 import javax.inject.Inject
@@ -220,6 +221,8 @@ class TestBundlePlugin implements Plugin<Project> {
         for (Project p : compileClasspathProjectDependencies(project)) {
             project.logger.debug("Publish '${p.tasks.jar.outputs.files.singleFile.absolutePath}' to '${additionalPluginsDir.path}/${p.name}'")
             injectedExecOps.execOps.exec {
+                it.standardOutput = new LogOutputStream(project.getLogger(), LogLevel.INFO, LogOutputStream.Type.STDOUT)
+                it.errorOutput = new LogOutputStream(project.getLogger(), LogLevel.INFO, LogOutputStream.Type.STDERR)
                 it.commandLine(config.eclipseSdkExe,
                         "-application", "org.eclipse.equinox.p2.publisher.FeaturesAndBundlesPublisher",
                         "-metadataRepository", "file:${additionalPluginsDir.path}/${p.name}",
@@ -234,6 +237,8 @@ class TestBundlePlugin implements Plugin<Project> {
         // and do the same with the current plugin
         project.logger.debug("Publish '${project.jar.outputs.files.singleFile.absolutePath}' to '${additionalPluginsDir.path}/${project.name}'")
         injectedExecOps.execOps.exec {
+            it.standardOutput = new LogOutputStream(project.logger, LogLevel.INFO, LogOutputStream.Type.STDOUT)
+            it.errorOutput = new LogOutputStream(project.logger, LogLevel.INFO, LogOutputStream.Type.STDERR)
             it.commandLine(config.eclipseSdkExe,
                     "-application", "org.eclipse.equinox.p2.publisher.FeaturesAndBundlesPublisher",
                     "-metadataRepository", "file:${additionalPluginsDir.path}/${project.name}",
@@ -250,6 +255,8 @@ class TestBundlePlugin implements Plugin<Project> {
         for (Project p : compileClasspathProjectDependencies(project)) {
             project.logger.info("Install '${additionalPluginsDir.path}/${p.name}' into '${testDistributionDir.absolutePath}'")
             injectedExecOps.execOps.exec {
+                it.standardOutput = new LogOutputStream(project.logger, LogLevel.INFO, LogOutputStream.Type.STDOUT)
+                it.errorOutput = new LogOutputStream(project.logger, LogLevel.INFO, LogOutputStream.Type.STDERR)
                 it.commandLine(config.eclipseSdkExe,
                         '-application', 'org.eclipse.equinox.p2.director',
                         '-repository', "file:${additionalPluginsDir.path}/${p.name}",
@@ -268,6 +275,8 @@ class TestBundlePlugin implements Plugin<Project> {
         // do the same with the current project
         project.logger.info("Install '${additionalPluginsDir.path}/${project.name}' into '${testDistributionDir.absolutePath}'")
         injectedExecOps.execOps.exec {
+            it.standardOutput = new LogOutputStream(project.logger, LogLevel.INFO, LogOutputStream.Type.STDOUT)
+            it.errorOutput = new LogOutputStream(project.logger, LogLevel.INFO, LogOutputStream.Type.STDERR)
             it.commandLine(config.eclipseSdkExe,
                     '-application', 'org.eclipse.equinox.p2.director',
                     '-repository', "file:${additionalPluginsDir.path}/${project.name}",

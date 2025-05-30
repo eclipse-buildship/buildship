@@ -16,6 +16,8 @@ import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.artifacts.ProjectDependency
 import org.gradle.api.file.FileCollection
+import org.gradle.api.logging.LogLevel
+import org.gradle.api.logging.Logger
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.process.ExecOperations
 
@@ -263,6 +265,8 @@ class UpdateSitePlugin implements Plugin<Project> {
 
     interface InjectedExecOps {
         @Inject
+        Logger getLogger()
+        @Inject
         ExecOperations getExecOps()
     }
 
@@ -292,6 +296,8 @@ class UpdateSitePlugin implements Plugin<Project> {
 
         // compress and store them in the same folder
         execOps.execOps.javaexec {
+            it.standardOutput = new LogOutputStream(project.logger, LogLevel.INFO, LogOutputStream.Type.STDOUT)
+            it.errorOutput = new LogOutputStream(project.logger, LogLevel.INFO, LogOutputStream.Type.STDERR)
             it.mainClass.set('org.eclipse.equinox.internal.p2.jarprocessor.Main')
             it.classpath Config.on(project).jarProcessorJar
             it.args = ['-pack',
@@ -344,6 +350,8 @@ class UpdateSitePlugin implements Plugin<Project> {
         // publish features/plugins to the update site
         project.logger.info("Publish plugins and features from '${rootDir.absolutePath}' to the update site '${repositoryDir.absolutePath}'")
         execOps.execOps.exec {
+            it.standardOutput = new LogOutputStream(project.logger, LogLevel.INFO, LogOutputStream.Type.STDOUT)
+            it.errorOutput = new LogOutputStream(project.logger, LogLevel.INFO, LogOutputStream.Type.STDERR)
             it.commandLine(Config.on(project).eclipseSdkExe,
                     '-nosplash',
                     '-application', 'org.eclipse.equinox.p2.publisher.FeaturesAndBundlesPublisher',
@@ -360,6 +368,8 @@ class UpdateSitePlugin implements Plugin<Project> {
         // publish P2 category defined in the category.xml to the update site
         project.logger.info("Publish categories defined in '${project.updateSite.siteDescriptor.absolutePath}' to the update site '${repositoryDir.absolutePath}'")
         execOps.execOps.exec {
+            it.standardOutput = new LogOutputStream(project.logger, LogLevel.INFO, LogOutputStream.Type.STDOUT)
+            it.errorOutput = new LogOutputStream(project.logger, LogLevel.INFO, LogOutputStream.Type.STDERR)
             it.commandLine(Config.on(project).eclipseSdkExe,
                     '-nosplash',
                     '-application', 'org.eclipse.equinox.p2.publisher.CategoryPublisher',
