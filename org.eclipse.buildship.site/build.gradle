@@ -252,7 +252,7 @@ private void signLocally(File unsignedFolder, File signedFolder) {
   def signBundle = {
     project.logger.info("Sign '${it.absolutePath}'")
     project.ant.signjar(
-        verbose: 'true',
+        verbose: 'false',
         destDir: targetDir,
         alias: 'EclipsePlugins',
         jar: it,
