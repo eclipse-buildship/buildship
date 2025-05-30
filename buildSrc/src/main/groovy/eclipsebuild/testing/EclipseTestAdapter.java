@@ -36,7 +36,7 @@ public class EclipseTestAdapter {
         while (true) {
             try {
                 EclipseTestEvent event = queue.poll(5, TimeUnit.MINUTES);
-                LOGGER.info("Received event: {}", event);
+                LOGGER.debug("Received event: {}", event);
                 if (event instanceof TestTreeEntry) {
                     TestTreeEntry testTreeEntry = (TestTreeEntry) event;
                     Set<String> testIds = testIdsInTestClass.getOrDefault(testTreeEntry.getClassName(), new HashSet<>());
