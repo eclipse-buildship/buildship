@@ -149,6 +149,9 @@ subprojects {
         configFile = "$checkstyleConfigDir/checkstyle.xml" as File
         configProperties = ['checkstyleConfigDir': checkstyleConfigDir]
         inputs.file "$checkstyleConfigDir/suppressions.xml" as File
+        reports {
+            html.stylesheet = project.rootProject.resources.text.fromFile('gradle/config/checkstyle/stylesheet.xsl')
+        }
     }
 
     tasks.withType(EclipseTestTask).all {
