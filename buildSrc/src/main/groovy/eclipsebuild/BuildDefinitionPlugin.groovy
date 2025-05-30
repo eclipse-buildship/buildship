@@ -270,6 +270,9 @@ class BuildDefinitionPlugin implements Plugin<Project> {
                 getNonMavenizedTargetPlatformDir().set(config.nonMavenizedTargetPlatformDir)
             }
 
+            eclipseSdkExe.convention(project.provider { Config.on(project).eclipseSdkExe.path })
+            repositoryMirrorUrls.convention(project.hasProperty('repository.mirrors') ? project.property('repository.mirrors') as String : null)
+
             onlyIf {
                 String hash = targetPlatformHash(project, config.targetPlatform.targetDefinition.text)
                 File digestFile = new File(config.nonMavenizedTargetPlatformDir, 'digest')
