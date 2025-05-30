@@ -28,10 +28,6 @@ import org.eclipse.buildship.core.internal.util.gradle.IdeFriendlyClassLoading
 
 class GradleBuildConnectionTest extends ProjectSynchronizationSpecification {
 
-    def setup() {
-        registerService(ProcessStreamsProvider, new TestProcessStreamProvider(){})
-    }
-
     def "Cannot run null action"() {
         when:
         GradleBuild gradleBuild = gradleBuildFor(dir('GradleBuildConnectionTest'))
