@@ -147,6 +147,8 @@ class TestBundlePlugin implements Plugin<Project> {
 //                }
 //            }
 
+            getTestEclipseDirectory().convention(project.layout.buildDirectory.dir('eclipseTest/eclipse'))
+
             doFirst {
                 def injectedExecOps = project.objects.newInstance(InjectedExecOps)
                 beforeEclipseTest(project, config, testDistributionDir, additionalPluginsDir, injectedExecOps)

@@ -7,17 +7,17 @@ import org.eclipse.jdt.internal.junit.model.ITestRunListener2;
 import org.eclipse.jdt.internal.junit.model.RemoteTestRunnerClient;
 import org.gradle.api.GradleException;
 import org.gradle.api.file.Directory;
+import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.file.FileTree;
-import org.gradle.api.internal.project.ProjectInternal;
 import org.gradle.api.internal.tasks.testing.TestClassProcessor;
 import org.gradle.api.internal.tasks.testing.TestClassRunInfo;
 import org.gradle.api.internal.tasks.testing.TestResultProcessor;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.tasks.JavaExec;
+import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.api.tasks.testing.TestEventReporterFactory;
-import org.gradle.internal.work.WorkerLeaseService;
 import org.gradle.process.ExecResult;
 import org.gradle.process.internal.ExecFactory;
 import org.gradle.process.internal.JavaExecAction;
@@ -36,6 +36,12 @@ public abstract class EclipseTestTask extends JavaExec {
     @Inject
     protected abstract TestEventReporterFactory getTestEventReporterFactory();
 
+    @Inject
+    protected abstract ExecFactory getExecFactory();
+
+    @OutputDirectory
+    public abstract DirectoryProperty getTestEclipseDirectory();
+
     @TaskAction
     @Override
     public void exec() {
@@ -53,18 +59,15 @@ public abstract class EclipseTestTask extends JavaExec {
         ExecutorService threadPool = Executors.newFixedThreadPool(2);
         File runDir = getProject().getLayout().getBuildDirectory().dir(getName()).get().getAsFile();
 
-        File testEclipseDir = new File(getProject().property("buildDir") + "/eclipseTest/eclipse");
-
-        File configIniFile = new File(testEclipseDir, "configuration/config.ini");
+        File configIniFile = new File(getTestEclipseDirectory().getAsFile().get(), "configuration/config.ini");
         assert configIniFile.exists();
 
-        File runPluginsDir = new File(testEclipseDir, "plugins");
+        File runPluginsDir = new File(getTestEclipseDirectory().getAsFile().get(), "plugins");
         LOGGER.info("Eclipse test directory is {}", runPluginsDir.getPath());
-        File equinoxLauncherFile = getEquinoxLauncherFile(testEclipseDir);
+        File equinoxLauncherFile = getEquinoxLauncherFile(getTestEclipseDirectory().getAsFile().get());
         LOGGER.info("equinox launcher file {}", equinoxLauncherFile);
 
-        ExecFactory execFactory = ((ProjectInternal) getProject()).getServices().get(ExecFactory.class);
-        final JavaExecAction javaExecHandleBuilder = execFactory.newJavaExecAction();
+        final JavaExecAction javaExecHandleBuilder = getExecFactory().newJavaExecAction();
         javaExecHandleBuilder.setClasspath(this.getProject().files(equinoxLauncherFile));
         javaExecHandleBuilder.getMainClass().set("org.eclipse.equinox.launcher.Main");
 
