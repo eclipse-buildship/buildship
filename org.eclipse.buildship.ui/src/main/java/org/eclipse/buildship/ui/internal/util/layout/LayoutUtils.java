@@ -31,4 +31,16 @@ public final class LayoutUtils {
         return layout;
     }
 
+    /**
+     * When restoring the width of a tree column from the preferences, ensure a
+     * minimum width of 1, so that the column is not completely hidden and can be
+     * resized by the user.
+     * 
+     * @param width as read from preferences
+     * @return the adjusted width
+     */
+    public static int ensureMinimumColumnWidth(int width) {
+        return Math.max(width, 1);
+    }
+
 }
