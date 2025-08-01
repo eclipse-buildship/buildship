@@ -59,7 +59,7 @@ public final class BuildScanPatternMatchListener implements IPatternMatchListene
 
     @Override
     public String getPattern() {
-        return "Publishing build [information|scan].*\\s+" + PatternUtils.WEB_URL_PATTERN;
+        return "Publishing (?:build information|build scan|Build Scan).*\\s+" + PatternUtils.WEB_URL_PATTERN;
     }
 
     @Override
