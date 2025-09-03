@@ -14,37 +14,3 @@ eclipseTest {
     applicationName = 'org.eclipse.pde.junit.runtime.coretestapplication'
     optionsFile = rootProject.project(':org.eclipse.buildship.core').file('.options')
 }
-
-def compatibilityCheckClassName = 'org.eclipse.buildship.core.internal.workspace.ImportingProjectCrossVersionTest'
-def compatibilityCheckDescriptorPrefix = 'Can return correct import result with Gradle'
-
-tasks.getByName("crossVersionEclipseTest") {
-    doLast { TestDescriptor descriptor, TestResult result ->
-        if (descriptor.className == compatibilityCheckClassName &&
-                descriptor.name.startsWith(compatibilityCheckDescriptorPrefix) &&
-                result.resultType == TestResult.ResultType.FAILURE) {
-            def testingGradleVersion = descriptor.name.substring(compatibilityCheckDescriptorPrefix.length()).trim()
-            if (project.hasProperty('eclipse.test.java.version')) {
-                def javaVersion = project.property('eclipse.test.java.version').toString()
-                if (javaVersion != null) {
-                    def propertiesFile = file('../org.eclipse.buildship.core/src/main/resources/org/eclipse/buildship/core/internal/gradle/java-unsupported-gradle.properties')
-                    Properties properties = new Properties()
-                    new FileInputStream(propertiesFile).withCloseable { res ->
-                        properties.load(res)
-                    }
-                    def currentGradleVersions = properties.get(javaVersion)
-                    if (currentGradleVersions == null) {
-                        properties.put(javaVersion, testingGradleVersion)
-                    } else {
-                        Set<String> gradleVersions = new HashSet<>(Arrays.asList(((String) currentGradleVersions).split(",")));
-                        gradleVersions.add(testingGradleVersion)
-                        properties.put(javaVersion, gradleVersions.stream().collect(Collectors.joining(",")))
-                    }
-                    new FileOutputStream(propertiesFile).withCloseable { res ->
-                        properties.store(res, null)
-                    }
-                }
-            }
-        }
-    }
-}

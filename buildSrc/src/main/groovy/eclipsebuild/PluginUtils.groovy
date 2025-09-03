@@ -56,6 +56,8 @@ class PluginUtils {
                                 entry.value = 'JavaSE-11'
                             } else if (targetCompat == '17') {
                                 entry.value = 'JavaSE-17'
+                            } else if (targetCompat == '21') {
+                                entry.value = 'JavaSE-21'
                             } else {
                                 throw new RuntimeException("Unhandled value for Bundle-RequiredExecutionEnvironment: " + targetCompat)
                             }

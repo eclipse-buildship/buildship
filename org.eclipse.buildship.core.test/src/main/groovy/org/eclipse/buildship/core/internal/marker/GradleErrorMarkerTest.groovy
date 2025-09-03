@@ -128,7 +128,7 @@ class GradleErrorMarkerTest extends ProjectSynchronizationSpecification {
     }
 
 
-    def "Convers problem reports to error markers"() {
+    def "Converts problem reports to error markers"() {
         setup:
         WorkspaceConfiguration w = CorePlugin.configurationManager().loadWorkspaceConfiguration()
         configurationManager.saveWorkspaceConfiguration(new WorkspaceConfiguration(w.gradleDistribution, w.gradleUserHome, w.javaHome, w.offline, w.buildScansEnabled, w.autoSync, w.arguments, w.jvmArguments, w.showConsoleView, w.showExecutionsView, w.experimentalModuleSupportEnabled , true, ""))
@@ -160,6 +160,5 @@ class GradleErrorMarkerTest extends ProjectSynchronizationSpecification {
 
         cleanup:
         CorePlugin.configurationManager().saveWorkspaceConfiguration(w)
-
     }
 }

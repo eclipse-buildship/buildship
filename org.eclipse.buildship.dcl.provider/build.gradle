@@ -4,8 +4,8 @@ dependencies {
 	api withEclipseBundle("org.eclipse.swt.${ECLIPSE_WS}.${ECLIPSE_OS}.${ECLIPSE_ARCH}")
 }
 
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(17) // TODO all Gradle plugins should use Java 17 for Eclipse 4.25+
+gradle.projectsLoaded {
+    if (JavaVersion.current() < JavaVersion.VERSION_17) {
+        throw new GradleException("This build requires Java 17 or above.")
     }
 }
