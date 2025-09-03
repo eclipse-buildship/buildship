@@ -4,7 +4,7 @@ Bundle-Name: %pluginName
 Bundle-Vendor: %providerName
 Bundle-SymbolicName: org.eclipse.buildship.oomph;singleton:=true
 Automatic-Module-Name: org.eclipse.buildship.oomph
-Bundle-Version: 3.1.10.qualifier
+Bundle-Version: 3.1.11.qualifier
 Bundle-ClassPath: .
 Bundle-ActivationPolicy: lazy
 Bundle-Localization: plugin

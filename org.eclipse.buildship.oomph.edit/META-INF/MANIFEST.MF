@@ -4,7 +4,7 @@ Bundle-Name: %pluginName
 Bundle-Vendor: %providerName
 Bundle-SymbolicName: org.eclipse.buildship.oomph.edit;singleton:=true
 Automatic-Module-Name: org.eclipse.buildship.oomph.edit
-Bundle-Version: 3.1.10.qualifier
+Bundle-Version: 3.1.11.qualifier
 Bundle-ClassPath: .
 Bundle-Activator: org.eclipse.buildship.oomph.provider.GradleImportEditPlugin$Implementation
 Bundle-ActivationPolicy: lazy

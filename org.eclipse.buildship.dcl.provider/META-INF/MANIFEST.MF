@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Provider
 Bundle-SymbolicName: org.eclipse.buildship.dcl.provider;singleton:=true
-Bundle-Version: 3.1.10.qualifier
+Bundle-Version: 3.1.11.qualifier
 Require-Bundle: org.eclipse.core.runtime,
  org.eclipse.core.contenttype,
  org.eclipse.ui,
