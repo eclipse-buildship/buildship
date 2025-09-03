@@ -36,6 +36,24 @@ This update site is built against the Eclipse version that was current at the ti
 
 Eclipse Version | Type      | Update Site
 --------------- | ----------| ------------
+2025-06         | snapshot  | `https://download.eclipse.org/buildship/updates/e436/snapshots/3.x`
+2025-06         | release   | `https://download.eclipse.org/buildship/updates/e436/releases/3.x`
+2025-03         | snapshot  | `https://download.eclipse.org/buildship/updates/e435/snapshots/3.x`
+2025-03         | release   | `https://download.eclipse.org/buildship/updates/e435/releases/3.x`
+2024-12         | snapshot  | `https://download.eclipse.org/buildship/updates/e434/snapshots/3.x`
+2024-12         | release   | `https://download.eclipse.org/buildship/updates/e434/releases/3.x`
+2024-09         | snapshot  | `https://download.eclipse.org/buildship/updates/e433/snapshots/3.x`
+2024-09         | release   | `https://download.eclipse.org/buildship/updates/e433/releases/3.x`
+2024-06         | snapshot  | `https://download.eclipse.org/buildship/updates/e432/snapshots/3.x`
+2024-06         | release   | `https://download.eclipse.org/buildship/updates/e432/releases/3.x`
+2024-03         | snapshot  | `https://download.eclipse.org/buildship/updates/e431/snapshots/3.x`
+2024-03         | release   | `https://download.eclipse.org/buildship/updates/e431/releases/3.x`
+2023-12         | snapshot  | `https://download.eclipse.org/buildship/updates/e430/snapshots/3.x`
+2023-12         | release   | `https://download.eclipse.org/buildship/updates/e430/releases/3.x`
+2023-09         | snapshot  | `https://download.eclipse.org/buildship/updates/e429/snapshots/3.x`
+2023-09         | release   | `https://download.eclipse.org/buildship/updates/e429/releases/3.x`
+2023-06         | snapshot  | `https://download.eclipse.org/buildship/updates/e428/snapshots/3.x`
+2023-06         | release   | `https://download.eclipse.org/buildship/updates/e428/releases/3.x`
 2023-03         | snapshot  | `https://download.eclipse.org/buildship/updates/e427/snapshots/3.x`
 2023-03         | release   | `https://download.eclipse.org/buildship/updates/e427/releases/3.x`
 2022-12         | snapshot  | `https://download.eclipse.org/buildship/updates/e426/snapshots/3.x`
