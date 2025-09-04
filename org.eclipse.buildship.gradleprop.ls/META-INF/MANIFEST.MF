@@ -2,4 +2,4 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Language Server
 Bundle-SymbolicName: org.eclipse.buildship.gradleprop.ls;singleton:=true
-Bundle-Version: 3.1.11.qualifier
+Bundle-Version: 3.1.12.qualifier

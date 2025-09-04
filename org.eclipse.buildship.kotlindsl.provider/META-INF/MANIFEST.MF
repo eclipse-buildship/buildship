@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Provider
 Bundle-SymbolicName: org.eclipse.buildship.kotlindsl.provider;singleton:=true
-Bundle-Version: 3.1.11.qualifier
+Bundle-Version: 3.1.12.qualifier
 Require-Bundle: org.eclipse.core.contenttype,
  org.eclipse.ui,
  org.eclipse.lsp4e,
