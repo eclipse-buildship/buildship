@@ -50,7 +50,7 @@ runs:
     - name: Set up JDK
       uses: actions/setup-java@v4
       with:
-        java-version: 11
+        java-version: 17
         distribution: "temurin"
 
     - run: echo "Run ${{ inputs.name }} with Eclipse ${{ inputs.eclipse }} and Java ${{ steps.java-version.outputs.java }} on ${{ inputs.os }}"
