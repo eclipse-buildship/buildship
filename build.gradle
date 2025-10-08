@@ -155,6 +155,9 @@ subprojects {
     // share checkstyle config across all sub-projects
     def checkstyleConfigDir = "$rootDir/gradle/config/checkstyle"
     tasks.withType(Checkstyle).all {
+        javaLauncher = javaToolchains.launcherFor {
+            languageVersion = JavaLanguageVersion.of(17)
+        }
         configFile = "$checkstyleConfigDir/checkstyle.xml" as File
         configProperties = ['checkstyleConfigDir': checkstyleConfigDir]
         inputs.file "$checkstyleConfigDir/suppressions.xml" as File
