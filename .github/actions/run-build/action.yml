@@ -37,7 +37,7 @@ runs:
         elif [[ $(echo "${{ steps.eclipse-version.outputs.formatted }}  < 417" | bc -l) -eq 1 ]]; then
           echo "java=8"  >> "$GITHUB_OUTPUT" 
         elif [[ $(echo "${{ steps.eclipse-version.outputs.formatted }}  < 425" | bc -l) -eq 1 ]]; then
-          echo "java=11"  >> "$GITHUB_OUTPUT" || echo "java=17"  >> "$GITHUB_OUTPUT"
+          echo "java=11"  >> "$GITHUB_OUTPUT"
         else 
           echo "java=17"  >> "$GITHUB_OUTPUT"
         fi
