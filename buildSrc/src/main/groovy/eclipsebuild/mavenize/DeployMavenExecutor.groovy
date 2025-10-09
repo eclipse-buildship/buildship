@@ -72,7 +72,7 @@ class DeployMavenExecutor {
             bundleFile = bundleFileOrDirectory
         }
         File sourceFile = options.sourceFile
-        if(sourceFile?.isDirectory()) {
+        if(sourceFile != null && sourceFile.isDirectory()) {
             File zipFile = new File(workFolder, sourceFile.name + '.jar')
             ant.zip(basedir: sourceFile, destfile: zipFile)
             sourceFile = zipFile
@@ -127,4 +127,3 @@ class DeployMavenExecutor {
         new File(System.getProperty('java.io.tmpdir')).eachFileMatch(~/maven-artifact\d+\.tmp/) { it.delete() }
     }
 }
-

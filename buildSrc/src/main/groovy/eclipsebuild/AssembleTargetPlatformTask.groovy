@@ -1,5 +1,6 @@
 package eclipsebuild
 
+import groovy.xml.XmlSlurper
 
 import org.gradle.api.DefaultTask
 import org.gradle.api.Project

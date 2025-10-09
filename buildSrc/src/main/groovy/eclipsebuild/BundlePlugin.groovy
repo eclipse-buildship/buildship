@@ -11,6 +11,9 @@
 
 package eclipsebuild
 
+import groovy.xml.XmlParser
+import groovy.xml.XmlNodePrinter
+
 import org.eclipse.osgi.framework.util.Headers
 import org.eclipse.osgi.internal.resolver.StateObjectFactoryImpl
 import org.eclipse.osgi.internal.resolver.UserState
