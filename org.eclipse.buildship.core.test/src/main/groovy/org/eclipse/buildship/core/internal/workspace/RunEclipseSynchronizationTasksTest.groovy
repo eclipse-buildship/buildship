@@ -17,13 +17,10 @@ import org.eclipse.buildship.core.internal.test.fixtures.TestProcessStreamProvid
 
 class RunEclipseSynchronizationTasksTest extends ProjectSynchronizationSpecification {
 
-    def setup() {
-        environment.registerService(ProcessStreamsProvider, new TestProcessStreamProvider() {})
-    }
 
     String getSyncConsoleOutput() {
         TestProcessStreamProvider testStreams = CorePlugin.processStreamsProvider()
-        testStreams.backroundStream.out
+        testStreams.testStream.out
     }
 
     def "executes tasks from eclipse plugin configuration"() {

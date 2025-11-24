@@ -39,7 +39,7 @@ class SourcePathTest extends ProjectSynchronizationSpecification {
          }
 
          when:
-         importAndWait(projectDir, GradleDistribution.forVersion(version), new File(System.getProperty('jdk8.location')))
+         importAndWait(projectDir, GradleDistribution.fromBuild())
          IRuntimeClasspathEntry[] p1sources = sourceEntries(findProject('p1'))
          IRuntimeClasspathEntry[] p2sources = sourceEntries(findProject('p2'))
 
@@ -48,10 +48,6 @@ class SourcePathTest extends ProjectSynchronizationSpecification {
          p1sources.find { IRuntimeClasspathEntry entry -> entry.path.toPortableString() == '/p2' }
          !p2sources.find { IRuntimeClasspathEntry entry -> entry.path.toPortableString() == '/p1' }
          p2sources.find { IRuntimeClasspathEntry entry -> entry.path.toPortableString() == '/p2' }
-
-         where:
-         // Gradle 4.3 doesn't use separate output dir per source folder
-         version << ['4.3', '4.4']
     }
 
     private IRuntimeClasspathEntry[] sourceEntries(IProject project) {

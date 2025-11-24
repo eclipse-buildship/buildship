@@ -39,7 +39,6 @@ class GradleBuildConnectionCachingTest extends BaseProjectConfiguratorTest {
     File location
 
     def setup() {
-        registerService(ProcessStreamsProvider, new TestProcessStreamProvider(){})
         location = dir('GradleBuildConnectionCachingTest') { file "build.gradle",
             """
                 plugins {
