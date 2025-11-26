@@ -224,21 +224,23 @@ public final class DefaultGradleBuild implements InternalGradleBuild {
 
         @Override
         public void runInToolingApi(CancellationTokenSource tokenSource, IProgressMonitor monitor) throws Exception {
-            try {
-                SubMonitor progress = SubMonitor.convert(monitor, 6);
-                progress.setTaskName((String.format("Synchronizing Gradle build at %s with workspace", this.gradleBuild.getBuildConfig().getRootProjectDirectory())));
-                new ImportRootProjectOperation(this.gradleBuild.getBuildConfig(), this.newProjectHandler).run(progress.newChild(1));
-                // Force caching the result
-                // Note, that this is a TAPI client-side operation and does not trigger configuration
-                this.gradleBuild.modelProvider.fetchModel(BuildEnvironment.class, FetchStrategy.FORCE_RELOAD, tokenSource, progress.newChild(1));
-                Set<EclipseProject> allProjects = collectAll(this.gradleBuild.modelProvider.fetchEclipseProjectAndRunSyncTasks(tokenSource, progress.newChild(1)));
-                new ValidateProjectLocationOperation(allProjects).run(progress.newChild(1));
-                new RunOnImportTasksOperation(allProjects, this.gradleBuild.getBuildConfig()).run(progress.newChild(1), tokenSource);
-                this.failures = new SynchronizeGradleBuildOperation(allProjects, this.gradleBuild, this.newProjectHandler,
-                        ProjectConfigurators.create(this.gradleBuild, CorePlugin.extensionManager().loadConfigurators())).run(progress.newChild(1));
-            } finally {
-                this.gradleBuild.projectConnectionCache.invalidateAll();
-            }
+            ToolingApiSystemProperties.withSyncActive(() -> {
+                try {
+                    SubMonitor progress = SubMonitor.convert(monitor, 6);
+                    progress.setTaskName((String.format("Synchronizing Gradle build at %s with workspace", this.gradleBuild.getBuildConfig().getRootProjectDirectory())));
+                    new ImportRootProjectOperation(this.gradleBuild.getBuildConfig(), this.newProjectHandler).run(progress.newChild(1));
+                    // Force caching the result
+                    // Note, that this is a TAPI client-side operation and does not trigger configuration
+                    this.gradleBuild.modelProvider.fetchModel(BuildEnvironment.class, FetchStrategy.FORCE_RELOAD, tokenSource, progress.newChild(1));
+                    Set<EclipseProject> allProjects = collectAll(this.gradleBuild.modelProvider.fetchEclipseProjectAndRunSyncTasks(tokenSource, progress.newChild(1)));
+                    new ValidateProjectLocationOperation(allProjects).run(progress.newChild(1));
+                    new RunOnImportTasksOperation(allProjects, this.gradleBuild.getBuildConfig()).run(progress.newChild(1), tokenSource);
+                    this.failures = new SynchronizeGradleBuildOperation(allProjects, this.gradleBuild, this.newProjectHandler,
+                            ProjectConfigurators.create(this.gradleBuild, CorePlugin.extensionManager().loadConfigurators())).run(progress.newChild(1));
+                } finally {
+                    this.gradleBuild.projectConnectionCache.invalidateAll();
+                }
+            });
         }
 
         @Override
