@@ -111,21 +111,21 @@ public final class CorePlugin extends Plugin {
     private ToolingApiOperationManager operationManager;
     private ExtensionManager extensionManager;
     
-    private String originalActive;
+    private String originalActiveSystemProperty;
 
     @Override
     public void start(BundleContext bundleContext) throws Exception {
         super.start(bundleContext);
         plugin = this;
         ensureProxySettingsApplied();
-        originalActive = ToolingApiSystemProperties.overrideActive();
+        originalActiveSystemProperty = ToolingApiSystemProperties.overrideActive();
         registerServices(bundleContext);
         scheduleSynchronizationForAbsentModels();
     }
 
     @Override
     public void stop(BundleContext context) throws Exception {
-        ToolingApiSystemProperties.restoreActive(originalActive);
+        ToolingApiSystemProperties.restoreActive(originalActiveSystemProperty);
         unregisterServices();
         IdeFriendlyClassLoading.cleanup();
         plugin = null;
