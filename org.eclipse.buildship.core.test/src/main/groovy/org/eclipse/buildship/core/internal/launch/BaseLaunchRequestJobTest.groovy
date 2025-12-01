@@ -20,18 +20,14 @@ import org.eclipse.buildship.core.internal.test.fixtures.WorkspaceSpecification
 
 class BaseLaunchRequestJobTest extends ProjectSynchronizationSpecification {
 
-    def setup() {
-        environment.registerService(ProcessStreamsProvider, new TestProcessStreamProvider() {})
-    }
-
     String getBuildOutput() {
         TestProcessStreamProvider testStreams = CorePlugin.processStreamsProvider()
-        testStreams.processStreams.last().out
+        testStreams.testStream.out
     }
 
     String getBuildConfig() {
         TestProcessStreamProvider testStreams = CorePlugin.processStreamsProvider()
-        testStreams.processStreams.last().conf
+        testStreams.testStream.conf
     }
 
     ILaunchConfiguration createLaunchConfiguration(File projectDir, tasks = ['clean', 'build'], GradleDistribution distribution = GradleDistribution.fromBuild(), arguments = []) {

@@ -25,11 +25,27 @@ import org.eclipse.buildship.core.GradleCore
 import org.eclipse.buildship.core.GradleDistribution
 import org.eclipse.buildship.core.SynchronizationResult
 import org.eclipse.buildship.core.internal.CorePlugin
+import org.eclipse.buildship.core.internal.console.ProcessStreamsProvider
 
 
 abstract class ProjectSynchronizationSpecification extends WorkspaceSpecification {
 
     protected static final GradleDistribution DEFAULT_DISTRIBUTION = GradleDistribution.fromBuild()
+
+
+    protected TestProcessStreamProvider testStreams
+
+    protected String getOutput() {
+        testStreams.testStream.getOut()
+    }
+
+    protected String getErrorOutput() {
+        testStreams.testStream.getErr()
+    }
+
+    def setup() {
+        environment.registerService(ProcessStreamsProvider, testStreams = new TestProcessStreamProvider() {})
+    }
 
     protected SynchronizationResult trySynchronizeAndWait(File location) {
         Optional<IProject> project = CorePlugin.workspaceOperations().findProjectByLocation(location.canonicalFile)
@@ -41,7 +57,21 @@ abstract class ProjectSynchronizationSpecification extends WorkspaceSpecificatio
         SynchronizationResult result = gradleBuildFor(project).synchronize(new NullProgressMonitor())
         waitForGradleJobsToFinish()
         waitForResourceChangeEvents()
+        maybePrintBuildOutput(result)
         result
+    }
+
+    protected void maybePrintBuildOutput(SynchronizationResult result) {
+        if (result.status.severity != IStatus.OK) {
+            String stdOut = getOutput().trim()
+            String stdErr = getErrorOutput().trim()
+            if (stdOut.isEmpty()) {
+                System.out.println(stdOut)
+            }
+            if (stdErr.isEmpty()) {
+                System.err.println(stdErr)
+            }
+        }
     }
 
     protected void synchronizeAndWait(File location) {
@@ -59,6 +89,7 @@ abstract class ProjectSynchronizationSpecification extends WorkspaceSpecificatio
         SynchronizationResult result = gradleBuild.synchronize(new NullProgressMonitor())
         waitForGradleJobsToFinish()
         waitForResourceChangeEvents()
+        maybePrintBuildOutput(result)
         result
     }
 

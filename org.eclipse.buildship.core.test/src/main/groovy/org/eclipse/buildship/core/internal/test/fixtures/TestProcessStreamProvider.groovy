@@ -15,19 +15,16 @@ import org.eclipse.buildship.core.internal.console.ProcessStreamsProvider
 
 abstract class TestProcessStreamProvider implements ProcessStreamsProvider {
 
-    TestProcessStream backroundStream = new TestProcessStream()
-    List<TestProcessStream> processStreams = []
+    TestProcessStream testStream = new TestProcessStream()
 
     @Override
     public ProcessStreams getBackgroundJobProcessStreams() {
-        backroundStream
+        testStream
     }
 
     @Override
     public ProcessStreams createProcessStreams(ProcessDescription processDescription) {
-        ProcessStreams result = new TestProcessStream()
-        processStreams += result
-        result
+        testStream
     }
 
     static class TestProcessStream implements ProcessStreams {
