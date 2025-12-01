@@ -10,5 +10,10 @@
 initscript {
     allprojects {
         apply plugin: "eclipse"
+        afterEvaluate {
+            if (project.parent == null) {
+                BUILD_SCANS_CONFIGURATION
+            }
+        }
     }
 }
