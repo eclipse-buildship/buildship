@@ -50,6 +50,7 @@ import org.eclipse.swt.widgets.TreeColumn;
 import org.eclipse.ui.IActionBars;
 
 import org.eclipse.buildship.core.internal.console.ProcessDescription;
+import org.eclipse.buildship.ui.internal.util.layout.LayoutUtils;
 import org.eclipse.buildship.ui.internal.util.nodeselection.ActionShowingContextMenuListener;
 import org.eclipse.buildship.ui.internal.util.nodeselection.NodeSelection;
 import org.eclipse.buildship.ui.internal.util.nodeselection.NodeSelectionProvider;
@@ -115,12 +116,12 @@ public final class ExecutionPage extends BasePage<FilteredTree> implements NodeS
 
         this.nameColumn = new TreeViewerColumn(this.filteredTree.getViewer(), SWT.NONE);
         this.nameColumn.getColumn().setText(ExecutionViewMessages.Tree_Column_Operation_Name_Text);
-        this.nameColumn.getColumn().setWidth(this.state.getHeaderNameColumnWidth());
+        this.nameColumn.getColumn().setWidth(LayoutUtils.ensureMinimumColumnWidth(this.state.getHeaderNameColumnWidth()));
         this.nameColumn.setLabelProvider(new DelegatingStyledCellLabelProvider(new ExecutionPageNameLabelProvider()));
 
         this.durationColumn = new TreeViewerColumn(this.filteredTree.getViewer(), SWT.RIGHT);
         this.durationColumn.getColumn().setText(ExecutionViewMessages.Tree_Column_Operation_Duration_Text);
-        this.durationColumn.getColumn().setWidth(this.state.getHeaderDurationColumnWidth());
+        this.durationColumn.getColumn().setWidth(LayoutUtils.ensureMinimumColumnWidth(this.state.getHeaderDurationColumnWidth()));
         this.durationColumn.setLabelProvider(new DelegatingStyledCellLabelProvider(new ExecutionPageDurationLabelProvider()));
 
         // keep header size synchronized between pages
