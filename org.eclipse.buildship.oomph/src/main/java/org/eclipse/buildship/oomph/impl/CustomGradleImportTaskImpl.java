@@ -50,9 +50,6 @@ public class CustomGradleImportTaskImpl extends GradleImportTaskImpl {
         if (sourceLocators.isEmpty()) {
             return false;
         }
-        if (context.getTrigger() != Trigger.MANUAL) {
-            return !calculateProjectsToImport().isEmpty();
-        }
         return true;
     }
 
