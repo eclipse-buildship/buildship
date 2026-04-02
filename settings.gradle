@@ -1,14 +1,14 @@
 // publish build scans from CI builds
 plugins {
-    id "com.gradle.develocity" version "3.19.2"
-    id 'com.gradle.common-custom-user-data-gradle-plugin' version '2.1'
+    id("com.gradle.develocity") version "4.4.0"
+    id("com.gradle.common-custom-user-data-gradle-plugin") version "2.4.0"
 }
 
 
 def isCI = System.getenv('CI') != null
 
 develocity {
-    server = "https://develocity-staging.eclipse.org"
+    server = "https://ge.gradle.org"
     allowUntrustedServer = false // ensure a trusted certificate is configured
     buildScan {
         publishing.onlyIf { it.isAuthenticated() }
