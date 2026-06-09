@@ -1717,7 +1717,7 @@
   <setupTask
       xsi:type="pde:TargetPlatformTask"
       id="buildship.activate.local.target.definition"
-      name="Buildship Eclipse 2024-12 Target Platform">
+      name="Buildship Eclipse 2026-06 Target Platform">
     <description></description>
   </setupTask>
   <stream name="master"

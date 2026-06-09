@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
 
 env:
-  ECLIPSE_LATEST: "436"
+  ECLIPSE_LATEST: "440"
 
 jobs:
   sanity-check:

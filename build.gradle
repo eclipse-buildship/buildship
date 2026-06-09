@@ -48,13 +48,16 @@ def targetPlatformIds = [
         '435',
         '436',
         '437',
+        '438',
+        '439',
+        '440',
 ]
 
 // target platform definition for all major Eclipse releases between version 4.3 and 4.8
 // the default version is 48 which can be overridden through -Peclipse.version=<version>
 // also the target platforms contain 1) the Eclipse SDK 2) the latest junit 3) SWTBot 2.2.1
 eclipseBuild {
-    defaultEclipseVersion = '434'
+    defaultEclipseVersion = '440'
     // TODO make the default targetPlatformIds.last() after adding support for running builds on Java 17. e424+ builds should run on Java 17.
 
     final def swtPluginId = "org.eclipse.swt.${ECLIPSE_WS}.${ECLIPSE_OS}.${ECLIPSE_ARCH}"
