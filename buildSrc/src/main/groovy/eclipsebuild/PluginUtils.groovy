@@ -13,6 +13,7 @@ package eclipsebuild
 
 import org.apache.tools.ant.filters.ReplaceTokens
 import org.gradle.api.Project
+import org.gradle.api.plugins.JavaPluginExtension
 
 import java.nio.file.Paths
 
@@ -48,13 +49,15 @@ class PluginUtils {
                         if (entry.key == 'Bundle-Version') {
                             entry.value = project.version
                         } else if (entry.key == 'Bundle-RequiredExecutionEnvironment') {
-                            def targetCompat = project.targetCompatibility.majorVersion
+                            def targetCompat = project.extensions.getByType(JavaPluginExtension).targetCompatibility.majorVersion
                             if (targetCompat == '8') {
                                 entry.value = 'JavaSE-1.8'
                             } else if (targetCompat == '11') {
                                 entry.value = 'JavaSE-11'
                             } else if (targetCompat == '17') {
                                 entry.value = 'JavaSE-17'
+                            } else if (targetCompat == '21') {
+                                entry.value = 'JavaSE-21'
                             } else {
                                 throw new RuntimeException("Unhandled value for Bundle-RequiredExecutionEnvironment: " + targetCompat)
                             }

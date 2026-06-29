@@ -1,7 +1,9 @@
 package eclipsebuild.jar
 
 import eclipsebuild.BuildDefinitionPlugin
+import eclipsebuild.Config
 import eclipsebuild.Constants
+import eclipsebuild.PluginUtils
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
@@ -10,6 +12,7 @@ import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.FileCollection
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.provider.Property
+import org.gradle.api.tasks.bundling.Jar
 import org.gradle.plugins.ide.eclipse.EclipsePlugin
 import org.gradle.plugins.ide.eclipse.model.Library
 
@@ -120,17 +123,25 @@ class ExistingJarBundlePlugin implements Plugin<Project> {
             outputDirectory.convention(project.layout.buildDirectory.dir("$BUNDLES_STAGING_FOLDER/plugins"))
             outputSourceDirectory.convention(project.layout.buildDirectory.dir("$BUNDLES_STAGING_FOLDER/plugin-sources"))
             pluginConfiguration.convention(getPluginConfiguration(project))
+            sourceReference.convention(project.provider { PluginUtils.sourceReference(project) })
+            jarFile.convention(project.tasks.named('jar', Jar).flatMap { it.archiveFile })
+            extraResourcesDirectory.convention(project.layout.buildDirectory.dir("tmp/bundle-resources").get().getAsFile().absolutePath )
+            getProjectName().convention(project.name)
+            getAllSrcDirs().convention(project.provider { project.sourceSets.main.allSource.srcDirs })
+            getFirstDependencyJar().convention(project.provider { JarBundleUtils.firstDependencyJar(pluginConfiguration.get()) })
+            getFirstDependencySourceJar().convention(project.provider { JarBundleUtils.firstDependencySourceJar(project, pluginConfiguration.get()) })
         }
     }
 
     private void addCreateP2RepositoryTask(Project project) {
          def task = project.tasks.create(TASK_NAME_CREATE_P2_REPOSITORY, CreateP2RepositoryTask) {
-            group = Constants.gradleTaskGroupName
-            dependsOn ":${BuildDefinitionPlugin.TASK_NAME_VALIDATE_ECLIPSE_SDK}"
-            dependsOn TASK_NAME_CONVERT_TO_BUNDLE
+             group = Constants.gradleTaskGroupName
+             dependsOn ":${BuildDefinitionPlugin.TASK_NAME_VALIDATE_ECLIPSE_SDK}"
+             dependsOn TASK_NAME_CONVERT_TO_BUNDLE
 
-            bundleSourceDir = new File(project.buildDir, BUNDLES_STAGING_FOLDER)
-            targetRepositoryDir = new File(project.buildDir, P2_REPOSITORY_FOLDER)
+             bundleSourceDir = new File(project.buildDir, BUNDLES_STAGING_FOLDER)
+             eclipseSdkExe.convention(project.provider { Config.on(project).eclipseSdkExe.path })
+             targetRepositoryDir = new File(project.buildDir, P2_REPOSITORY_FOLDER)
         }
     }
 

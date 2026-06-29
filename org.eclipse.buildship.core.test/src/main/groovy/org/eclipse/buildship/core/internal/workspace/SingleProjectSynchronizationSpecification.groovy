@@ -9,18 +9,6 @@
  ******************************************************************************/
 package org.eclipse.buildship.core.internal.workspace
 
-import org.gradle.api.JavaVersion
-import spock.lang.IgnoreIf
-import spock.lang.Unroll
-
-import org.eclipse.core.runtime.IPath
-import org.eclipse.core.runtime.Path
-import org.eclipse.jdt.core.IAccessRule
-import org.eclipse.jdt.core.IClasspathEntry
-import org.eclipse.jdt.core.IJavaProject
-import org.eclipse.jdt.core.JavaCore
-import org.eclipse.jdt.launching.JavaRuntime
-
 import org.eclipse.buildship.core.GradleDistribution
 import org.eclipse.buildship.core.internal.Logger
 import org.eclipse.buildship.core.internal.configuration.BuildConfigurationPersistence
@@ -28,6 +16,16 @@ import org.eclipse.buildship.core.internal.configuration.GradleProjectNature
 import org.eclipse.buildship.core.internal.test.fixtures.ProjectSynchronizationSpecification
 import org.eclipse.buildship.core.internal.util.gradle.GradleVersion
 import org.eclipse.buildship.core.internal.util.gradle.JavaVersionUtil
+import org.eclipse.core.runtime.IPath
+import org.eclipse.core.runtime.Path
+import org.eclipse.jdt.core.IAccessRule
+import org.eclipse.jdt.core.IClasspathEntry
+import org.eclipse.jdt.core.IJavaProject
+import org.eclipse.jdt.core.JavaCore
+import org.eclipse.jdt.launching.JavaRuntime
+import org.gradle.api.JavaVersion
+import spock.lang.IgnoreIf
+import spock.lang.Unroll
 
 abstract class SingleProjectSynchronizationSpecification extends ProjectSynchronizationSpecification {
 
@@ -72,7 +70,7 @@ abstract class SingleProjectSynchronizationSpecification extends ProjectSynchron
         then:
         def project = findProject('sample-project')
         project.description.natureIds.find { it == 'org.eclipse.pde.UpdateSiteNature' }
-        project.description.buildSpec.find { it.builderName == 'customBuildCommand' }.arguments == ['buildCommandKey' : "buildCommandValue"]
+        project.description.buildSpec.find { it.builderName == 'customBuildCommand' }.arguments == ['buildCommandKey': "buildCommandValue"]
 
         where:
         distribution << getSupportedGradleDistributions('>=3.0')
@@ -158,7 +156,7 @@ abstract class SingleProjectSynchronizationSpecification extends ProjectSynchron
         prepareProject('sample-project')
         def projectDir = dir('sample-project') {
             file 'build.gradle',
-            '''
+                    '''
                 apply plugin: "java"
                 sourceSets { main { java { srcDir '../another-project/src' } } }
             '''
@@ -180,8 +178,10 @@ abstract class SingleProjectSynchronizationSpecification extends ProjectSynchron
         def projectDir = dir('sample-project') {
             file 'build.gradle', """
                 apply plugin: 'java'
-                sourceCompatibility = 1.2
-                targetCompatibility = 1.3
+                java {
+                    sourceCompatibility = 1.2
+                    targetCompatibility = 1.3
+                }
             """
             dir 'src/main/java'
         }
@@ -210,8 +210,11 @@ abstract class SingleProjectSynchronizationSpecification extends ProjectSynchron
         def projectDir = dir('sample-project') {
             file 'build.gradle', """
                 apply plugin: 'java'
-                sourceCompatibility = 1.2
-                targetCompatibility = 1.3
+                
+                java {
+                    sourceCompatibility = 1.2
+                    targetCompatibility = 1.3
+                }
             """
             dir 'src/main/java'
         }
@@ -376,7 +379,7 @@ abstract class SingleProjectSynchronizationSpecification extends ProjectSynchron
         outputLocation == '/sample-project/target/bin'
 
         where:
-        distribution <<  getSupportedGradleDistributions('>=3.0')
+        distribution << getSupportedGradleDistributions('>=3.0')
     }
 
     @Unroll
@@ -421,22 +424,22 @@ abstract class SingleProjectSynchronizationSpecification extends ProjectSynchron
                     }
                 }
             """
-           }
+        }
 
-           when:
-           importAndWait(projectDir, distribution)
-           IJavaProject project = findJavaProject('sample-project')
-           IClasspathEntry container = project.rawClasspath.find { it.path.toPortableString() == 'containerPath' }
-           IClasspathEntry projectDep = project.getResolvedClasspath(true).find { it.path.toPortableString() == '/api' }
-           IClasspathEntry libraryDep = project.getResolvedClasspath(true).find { it.path.toPortableString().endsWith 'guava-18.0.jar' }
+        when:
+        importAndWait(projectDir, distribution)
+        IJavaProject project = findJavaProject('sample-project')
+        IClasspathEntry container = project.rawClasspath.find { it.path.toPortableString() == 'containerPath' }
+        IClasspathEntry projectDep = project.getResolvedClasspath(true).find { it.path.toPortableString() == '/api' }
+        IClasspathEntry libraryDep = project.getResolvedClasspath(true).find { it.path.toPortableString().endsWith 'guava-18.0.jar' }
 
-           then:
-           assertAccessRules(container, IAccessRule.K_ACCESSIBLE, 'container-pattern')
-           assertAccessRules(projectDep, IAccessRule.K_NON_ACCESSIBLE, 'project-pattern')
-           assertAccessRules(libraryDep, IAccessRule.K_DISCOURAGED, 'library-pattern')
+        then:
+        assertAccessRules(container, IAccessRule.K_ACCESSIBLE, 'container-pattern')
+        assertAccessRules(projectDep, IAccessRule.K_NON_ACCESSIBLE, 'project-pattern')
+        assertAccessRules(libraryDep, IAccessRule.K_DISCOURAGED, 'library-pattern')
 
-           where:
-           distribution <<  getSupportedGradleDistributions('>=3.0')
+        where:
+        distribution << getSupportedGradleDistributions('>=3.0')
     }
 
     @Unroll
@@ -517,25 +520,31 @@ abstract class SingleProjectSynchronizationSpecification extends ProjectSynchron
                     }
                 }
             """
-           }
+            dir("api") {
+                file 'build.gradle', """
+                    apply plugin: 'java'
+                """
+                dir 'src/main/java'
+            }
+        }
 
-           when:
-           importAndWait(projectDir, distribution)
-           IJavaProject project = findJavaProject('sample-project')
-           IClasspathEntry source = project.rawClasspath.find { it.path.toPortableString() == '/sample-project/src/main/java' }
-           IClasspathEntry container = project.rawClasspath.find { it.path.toPortableString() == 'containerPath' }
-           IClasspathEntry projectDep = project.getResolvedClasspath(true).find { it.path.toPortableString() == '/api' }
-           IClasspathEntry libraryDep = project.getResolvedClasspath(true).find { it.path.toPortableString().endsWith 'guava-18.0.jar' }
+        when:
+        importAndWait(projectDir, distribution)
+        IJavaProject project = findJavaProject('sample-project')
+        IClasspathEntry source = project.rawClasspath.find { it.path.toPortableString() == '/sample-project/src/main/java' }
+        IClasspathEntry container = project.rawClasspath.find { it.path.toPortableString() == 'containerPath' }
+        IClasspathEntry projectDep = project.getResolvedClasspath(true).find { it.path.toPortableString() == '/api' }
+        IClasspathEntry libraryDep = project.getResolvedClasspath(true).find { it.path.toPortableString().endsWith 'guava-18.0.jar' }
 
-           then:
-           assertClasspathAttributes(source, 'sourceKey', 'sourceValue')
-           assertClasspathAttributes(container, 'containerKey', 'containerValue')
-           assertClasspathAttributes(projectDep, 'projectKey', 'projectValue')
-           assertClasspathAttributes(libraryDep, 'javadoc_location')
-           assertClasspathAttributes(libraryDep, 'libraryKey', 'libraryValue')
+        then:
+        assertClasspathAttributes(source, 'sourceKey', 'sourceValue')
+        assertClasspathAttributes(container, 'containerKey', 'containerValue')
+        assertClasspathAttributes(projectDep, 'projectKey', 'projectValue')
+        assertClasspathAttributes(libraryDep, 'javadoc_location')
+        assertClasspathAttributes(libraryDep, 'libraryKey', 'libraryValue')
 
-           where:
-           distribution << getSupportedGradleDistributions('>=3.0')
+        where:
+        distribution << getSupportedGradleDistributions('>=3.0')
     }
 
     def "Custom java runtime name"() {
@@ -560,15 +569,15 @@ abstract class SingleProjectSynchronizationSpecification extends ProjectSynchron
                     }
                 }
             """
-           }
+        }
 
-           when:
-           importAndWait(projectDir)
+        when:
+        importAndWait(projectDir)
 
-           then:
-           IJavaProject project = findJavaProject('sample-project')
-           IPath jrePath = new Path('org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.CustomVMType/Domino')
-           project.rawClasspath.find { it.path == jrePath }
+        then:
+        IJavaProject project = findJavaProject('sample-project')
+        IPath jrePath = new Path('org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.CustomVMType/Domino')
+        project.rawClasspath.find { it.path == jrePath }
     }
 
     protected void assertAccessRules(IClasspathEntry entry, int kind, String pattern) {
@@ -594,6 +603,6 @@ abstract class SingleProjectSynchronizationSpecification extends ProjectSynchron
     }
 
     protected void assertNoClasspathAttributes(IClasspathEntry entry, String name) {
-       assert !entry.extraAttributes.find { it.name == name }
+        assert !entry.extraAttributes.find { it.name == name }
     }
 }

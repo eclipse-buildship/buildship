@@ -11,6 +11,9 @@
 
 package eclipsebuild
 
+import groovy.xml.XmlParser
+import groovy.xml.XmlNodePrinter
+
 import org.eclipse.osgi.framework.util.Headers
 import org.eclipse.osgi.internal.resolver.StateObjectFactoryImpl
 import org.eclipse.osgi.internal.resolver.UserState
@@ -85,7 +88,7 @@ class BundlePlugin implements Plugin<Project> {
 
         // add sources jar task
         project.task('sourcesJar', type: Jar, dependsOn: 'classes') {
-            classifier = 'sources'
+            archiveClassifier = 'sources'
             from project.sourceSets.main.allSource
         }
         project.artifacts { archives project.tasks.sourcesJar }

@@ -8,32 +8,29 @@
             <repository location="https://download.eclipse.org/releases/2023-09"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="planner" includeSource="true" type="InstallableUnit">
-            <unit id="org.junit" version="4.13.0.v20200204-1500"/>
-            <unit id="org.slf4j.api" version="1.7.30.v20200204-2150"/>
-            <repository location="https://download.eclipse.org/tools/orbit/downloads/drops/R20210602031627/repository"/>
+            <unit id="com.google.guava" version="33.3.1.jre"/>
+            <unit id="com.google.gson" version="2.11.0"/>
+            <unit id="org.junit" version="4.13.2.v20240929-1000"/>
+            <unit id="slf4j.api" version="2.0.16"/>
+            <unit id="junit-jupiter-api" version="5.11.3"/>
+            <unit id="junit-jupiter-engine" version="5.11.3"/>
+            <unit id="junit-jupiter-migrationsupport" version="5.11.3"/>
+            <unit id="junit-jupiter-params" version="5.11.3"/>
+            <unit id="junit-platform-commons" version="1.11.3"/>
+            <unit id="junit-platform-engine" version="1.11.3"/>
+            <unit id="junit-platform-launcher" version="1.11.3"/>
+            <unit id="junit-platform-runner" version="1.11.3"/>
+            <unit id="junit-platform-suite-api" version="1.11.3"/>
+            <unit id="junit-platform-suite-commons" version="1.11.3"/>
+            <unit id="junit-platform-suite-engine" version="1.11.3"/>
+            <unit id="junit-vintage-engine" version="5.11.3"/>
+            <repository location="https://download.eclipse.org/tools/orbit/simrel/orbit-aggregation/2024-12"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="planner" includeSource="true" type="InstallableUnit">
-            <unit id="com.google.guava" version="33.0.0.jre"/>
-            <unit id="com.google.gson" version="2.10.1"/>
-            <unit id="junit-jupiter-api" version="5.10.2" />
-            <unit id="junit-jupiter-engine" version="5.10.2"/>
-            <unit id="junit-jupiter-migrationsupport" version="5.10.2"/>
-            <unit id="junit-jupiter-params" version="5.10.2"/>
-            <unit id="junit-platform-commons" version="1.10.2"/>
-            <unit id="junit-platform-engine" version="1.10.2"/>
-            <unit id="junit-platform-launcher" version="1.10.2"/>
-            <unit id="junit-platform-runner" version="1.10.2"/>
-            <unit id="junit-platform-suite-api" version="1.10.2"/>
-            <unit id="junit-platform-suite-commons" version="1.10.2"/>
-            <unit id="junit-platform-suite-engine" version="1.10.2"/>
-            <unit id="junit-vintage-engine" version="5.10.2"/>
-            <repository location="https://download.eclipse.org/tools/orbit/simrel/maven-osgi/2024-03"/>
-        </location>
-        <location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="planner" includeSource="true" type="InstallableUnit">
-            <unit id="org.eclipse.swtbot.eclipse.feature.group" version="3.1.0.202106041005"/>
-            <unit id="org.eclipse.swtbot.ide.feature.group" version="3.1.0.202106041005"/>
-            <unit id="org.eclipse.swtbot.junit5.feature.group" version="3.1.0.202106041005"/>
-            <repository location="https://download.eclipse.org/technology/swtbot/releases/3.1.0"/>
+            <unit id="org.eclipse.swtbot.eclipse.feature.group" version="4.2.1.202406141605"/>
+            <unit id="org.eclipse.swtbot.ide.feature.group" version="4.2.1.202406141605"/>
+            <unit id="org.eclipse.swtbot.junit5.feature.group" version="4.2.1.202406141605"/>
+            <repository location="https://download.eclipse.org/technology/swtbot/releases/4.2.1"/>
         </location>
     </locations>
     <targetJRE path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-17"/>

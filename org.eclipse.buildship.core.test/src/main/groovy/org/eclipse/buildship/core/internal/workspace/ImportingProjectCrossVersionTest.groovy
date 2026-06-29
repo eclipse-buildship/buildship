@@ -43,41 +43,16 @@ class ImportingProjectCrossVersionTest extends ProjectSynchronizationSpecificati
             dir('sub1') {
                 file 'build.gradle', '''
                     description = 'sub project 1'
-                    task myFirstTaskOfSub1 {
-                        description = '1st task of sub1'
-                        group = 'build'
-                    }
-                   task mySecondTaskOfSub1 {
-                       description = '2nd task of sub1'
-                   }
                 '''
             }
             dir('sub2') {
                 file 'build.gradle', '''
                     description = 'sub project 2'
-                    task myFirstTaskOfSub2 {
-                        description = '1st task of sub2'
-                    }
-                    task mySecondTaskOfSub2 {
-                        description = '2nd task of sub2'
-                    }
-                    task myTask {
-                        description = 'another task of sub2'
-                        group = 'build'
-                    }
-
                 '''
 
                 dir('subSub1') {
                     file 'build.gradle', '''
                         description = 'subSub project 1 of sub project 2'
-                        task myFirstTaskOfSub2subSub1{
-                            description = '1st task of sub2:subSub1'
-                        }
-                        task mySecondTaskOfSub2subSub1{
-                            description = '2nd task of sub2:subSub1'
-                        }
-                        task myTask {}
                     '''
                 }
             }
@@ -338,4 +313,3 @@ class ImportingProjectCrossVersionTest extends ProjectSynchronizationSpecificati
         distribution << getSupportedGradleDistributions('<3.3 >=3.1')
     }
 }
-

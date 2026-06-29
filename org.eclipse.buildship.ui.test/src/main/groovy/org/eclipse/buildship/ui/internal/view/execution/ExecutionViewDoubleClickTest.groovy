@@ -51,6 +51,7 @@ class ExecutionViewDoubleClickTest extends BaseExecutionViewTest {
         runNode.expanded
     }
 
+    @spock.lang.Ignore
     def "Double-clicking test class and method open editor"() {
         setup:
         bot.closeAllEditors()

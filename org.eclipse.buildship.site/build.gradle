@@ -12,14 +12,14 @@ buildscript {
 
 updateSite {
     extraResources = files('epl-v20.html', 'notice.html', 'p2.index')
-    signing { File unsignedFolder, File signedFolder ->
+    signing = { File unsignedFolder, File signedFolder ->
         if (gradle.taskGraph.hasTask(uploadUpdateSite)) {
             signWithEclipseService(signedFolder, unsignedFolder)
         } else {
             signLocally(unsignedFolder, signedFolder)
         }
     }
-    mutateArtifactsXml { Node artifactsXml ->
+    mutateArtifactsXml = { Node artifactsXml ->
         addExtraPropertiesToArtifactsXml(artifactsXml)
     }
 }
@@ -56,7 +56,7 @@ dependencies {
     externalPlugin withEclipseBundle('org.gradle.toolingapi')
 
     // official 3rd party dependencies from Orbit which are already signed and normalized with pack200
-    signedExternalPlugin withEclipseBundle('org.slf4j.api')
+    signedExternalPlugin withEclipseBundle('slf4j.api')
     signedExternalPlugin withEclipseBundle('com.google.gson')
     signedExternalPlugin withEclipseBundle('com.google.guava')
 }
@@ -252,7 +252,7 @@ private void signLocally(File unsignedFolder, File signedFolder) {
   def signBundle = {
     project.logger.info("Sign '${it.absolutePath}'")
     project.ant.signjar(
-        verbose: 'true',
+        verbose: 'false',
         destDir: targetDir,
         alias: 'EclipsePlugins',
         jar: it,

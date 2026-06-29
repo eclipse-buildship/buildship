@@ -28,6 +28,8 @@ import org.codehaus.classworlds.DuplicateRealmException
 import org.codehaus.plexus.PlexusContainer
 import org.codehaus.plexus.PlexusContainerException
 import org.codehaus.plexus.embed.Embedder
+import groovy.ant.AntBuilder
+import org.codehaus.plexus.logging.Logger
 
 /**
  * Deploys OSGI bundle (jar or directory) to maven repository
@@ -70,7 +72,7 @@ class DeployMavenExecutor {
             bundleFile = bundleFileOrDirectory
         }
         File sourceFile = options.sourceFile
-        if(sourceFile?.isDirectory()) {
+        if(sourceFile != null && sourceFile.isDirectory()) {
             File zipFile = new File(workFolder, sourceFile.name + '.jar')
             ant.zip(basedir: sourceFile, destfile: zipFile)
             sourceFile = zipFile
@@ -105,6 +107,7 @@ class DeployMavenExecutor {
             classWorld.newRealm("plexus.core", getClass().getClassLoader())
             Embedder embedder = new Embedder()
             embedder.start(classWorld)
+            embedder.getContainer().getLoggerManager().setThreshold(Logger.LEVEL_WARN)
             return embedder.getContainer()
         }
         catch (PlexusContainerException e) {
@@ -124,4 +127,3 @@ class DeployMavenExecutor {
         new File(System.getProperty('java.io.tmpdir')).eachFileMatch(~/maven-artifact\d+\.tmp/) { it.delete() }
     }
 }
-

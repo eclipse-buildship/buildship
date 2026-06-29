@@ -2,5 +2,6 @@ apply plugin: eclipsebuild.BundlePlugin
 
 dependencies {
     api withEclipseBundle("org.eclipse.swt.${ECLIPSE_WS}.${ECLIPSE_OS}.${ECLIPSE_ARCH}")
+    compileOnly("com.google.errorprone:error_prone_annotations:2.25.0") // Groovy would warn about unknown annotations in Guava classes without this dependency
 }
 

@@ -10,18 +10,11 @@ apply plugin: eclipsebuild.BuildDefinitionPlugin
 
 ext.toolingApiBundleVersion = getBundleVersion(toolingApiVersion)
 
+// TODO pin down java version and fail if build runs with non-11 version
+
 // define version mapping for the 3rd-party dependencies that are not specific to a particular Eclipse version
 def eclipseVersionAgnosticDependencies = [
-        'org.gradle.toolingapi'                : toolingApiBundleVersion,
-        'org.slf4j.api'                        : '1.7.30',
-        'org.slf4j.simple'                     : '1.7.30',
-        'com.google.guava'                     : "$guavaVersion",
-        'com.google.gson'                      : '2.10.1',
-        'org.eclipse.swtbot.eclipse.finder'    : "$swtBotVersion",
-        'org.eclipse.swtbot.junit5_x'          : "$swtBotVersion",
-        'org.jetbrains.kotlin.bundled-compiler': '0.8.7',
-        'org.jetbrains.kotlin.core'            : '0.8.7',
-        'org.apache.log4j'                     : '1.2.25'
+        'org.gradle.toolingapi'                : toolingApiBundleVersion
 ]
 
 def targetPlatformIds = [
@@ -52,6 +45,9 @@ def targetPlatformIds = [
         '432',
         '433',
         '434',
+        '435',
+        '436',
+        '437',
 ]
 
 // target platform definition for all major Eclipse releases between version 4.3 and 4.8
@@ -75,6 +71,15 @@ eclipseBuild {
     commitId = currentCommitId()
 }
 
+def develocityApi = project.extensions.findByName('develocity')
+if (develocityApi) {
+    def eclipseVersion = Config.on(project).getTargetPlatform().getEclipseVersion()
+    develocityApi.getBuildScan().tag("eclipse_${eclipseVersion}")
+    if (project.hasProperty('eclipse.test.java.version')) {
+        develocityApi.getBuildScan().tag("eclipseTestJdk_${project.getProperty('eclipse.test.java.version')}")
+    }
+}
+
 // read the current version from an external file and add a timestamp suffix if requested by the caller
 ext.baseVersion = file('version.txt').text.trim()
 ext.versionQualifier = getVersionQualifier()
@@ -82,47 +87,6 @@ version = baseVersion + '.' + versionQualifier
 
 // ensure that the assembleTargetPlatform is executed when the gradle.properties file is changed
 project.assembleTargetPlatform.inputs.file file('gradle.properties')
-
-// delete the org.eclipse.core.runtime.compatibility.registry plugin from the target platform
-// it causes classpath issues when the the Spock tests are running with Groovy 2.4; only
-// contains files to provide 2.x compatibility hence it's safe to remove
-project.assembleTargetPlatform.doLast {
-    def config = Config.on(project)
-    if (config.targetPlatform.eclipseVersion in ['43', '44', '45']) {
-        def registryPluginId = 'org.eclipse.core.runtime.compatibility.registry'
-
-        project.exec {
-            // redirect the external process output to the logging
-            standardOutput = new LogOutputStream(project.logger, LogLevel.INFO)
-            errorOutput = new LogOutputStream(project.logger, LogLevel.INFO)
-
-            commandLine(config.eclipseSdkExe.path,
-                    '-application', 'org.eclipse.equinox.p2.director',
-                    '-uninstallIU', registryPluginId,
-                    '-tag', 'target-platform-2',
-                    '-destination', config.nonMavenizedTargetPlatformDir.path,
-                    '-profile', 'SDKProfile',
-                    '-bundlepool', config.nonMavenizedTargetPlatformDir.path,
-                    '-p2.os', Constants.os,
-                    '-p2.ws', Constants.ws,
-                    '-p2.arch', Constants.arch,
-                    '-roaming',
-                    '-nosplash')
-        }
-
-        def bundlesInfo = new File(config.nonMavenizedTargetPlatformDir, 'configuration/org.eclipse.equinox.simpleconfigurator/bundles.info')
-        def updatedInfo = ''
-        bundlesInfo.withReader { reader ->
-            def line
-            while (line = reader.readLine()) {
-                if (!line.contains(registryPluginId)) {
-                    updatedInfo += line + '\n'
-                }
-            }
-        }
-        bundlesInfo.text = updatedInfo
-    }
-}
 
 subprojects {
     // set the calculated version on all projects in the hierarchy
@@ -142,10 +106,16 @@ subprojects {
                     languageVersion = JavaLanguageVersion.of(11)
                 }
             }
-        } else {
+        } else if (config.targetPlatform.eclipseVersion in ['425', '426', '427', '428', '429', '430', '431', '432', '433', '434']) {
             java {
                 toolchain {
                     languageVersion = JavaLanguageVersion.of(17)
+                }
+            }
+        } else {
+            java {
+                toolchain {
+                    languageVersion = JavaLanguageVersion.of(21)
                 }
             }
         }
@@ -168,6 +138,7 @@ subprojects {
             }
             bundled "cglib:cglib-nodep:$cglibLibVersion"
             bundled "org.slf4j:slf4j-simple:$slf4jLibVersion"
+            compileOnly("com.google.errorprone:error_prone_annotations:2.25.0") // Groovy would warn about unknown annotations in Guava classes without this dependency
         }
         if (project.hasProperty('eclipse.test.java.version')) {
             tasks.withType(EclipseTestTask) {
@@ -184,44 +155,51 @@ subprojects {
     // share checkstyle config across all sub-projects
     def checkstyleConfigDir = "$rootDir/gradle/config/checkstyle"
     tasks.withType(Checkstyle).all {
+        javaLauncher = javaToolchains.launcherFor {
+            languageVersion = JavaLanguageVersion.of(17)
+        }
         configFile = "$checkstyleConfigDir/checkstyle.xml" as File
         configProperties = ['checkstyleConfigDir': checkstyleConfigDir]
         inputs.file "$checkstyleConfigDir/suppressions.xml" as File
+        reports {
+            html.stylesheet = project.rootProject.resources.text.fromFile('gradle/config/checkstyle/stylesheet.xsl')
+        }
     }
 
-    tasks.withType(Test).all {
+    tasks.withType(EclipseTestTask).all {
         def java8 = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(8) }
         def java11 = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(11) }
         jvmArgs "-Djdk8.location=${java8.get().metadata.installationPath.asFile}"
         jvmArgs "-Djdk11.location=${java11.get().metadata.installationPath.asFile}"
 
-        // TODO re-enable html test reporting
-        reports.html.enabled = false
-        reports.junitXml.enabled = false
+        def config = Config.on(project)
+        if (config.targetPlatform.eclipseVersion in ['48', '49', '410', '411', '412', '413', '414', '415', '416', '417', '418', '419', '420', '421', '422', '423', '424', '425', '426', '427', '428']) {
+           enabled = false  
+        }
     }
 
     // configure the repositories where the external dependencies can be found
     repositories {
         maven {
             name = 'mavenized-target-platform'
-            url "${eclipsebuild.Config.on(project).mavenizedTargetPlatformDir}"
+            url = "${eclipsebuild.Config.on(project).mavenizedTargetPlatformDir}"
         }
 
         mavenCentral()
 
         maven {
             name = 'gradle-snapshots'
-            url gradleSnapshotsRepositoryUrl
+            url = gradleSnapshotsRepositoryUrl
         }
 
         maven {
             name = 'gradle-releases'
-            url gradleReleasesRepositoryUrl
+            url = gradleReleasesRepositoryUrl
         }
 
         maven {
             name = 'gradle-remote'
-            url gradleRemoteRepositoryUrl
+            url = gradleRemoteRepositoryUrl
         }
     }
 }
@@ -336,12 +314,9 @@ String getBundleVersion(String version) {
 }
 
 def currentCommitId() {
-    def result = new ByteArrayOutputStream()
-    exec {
-        standardOutput = result
+    def gitVersion = providers.exec {
         commandLine('git', 'rev-parse', '--verify', 'HEAD')
-    }
-    return result.toString().trim()
+    }.standardOutput.asText.get().trim()
 }
 
 def readVersionMapping(File propertiesFile, String swtPluginId) {

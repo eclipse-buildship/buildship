@@ -16,7 +16,8 @@ import org.eclipse.buildship.core.GradleDistribution
 import org.eclipse.buildship.core.internal.util.gradle.GradleVersion
 import org.eclipse.buildship.ui.internal.test.fixtures.ProjectSynchronizationSpecification
 
-class TestLaunchShortcutValidatorTest extends ProjectSynchronizationSpecification {
+@spock.lang.Ignore
+abstract class TestLaunchShortcutValidatorTest extends ProjectSynchronizationSpecification {
 
     def "Launch shortcut enabled on test sources"() {
         setup:

@@ -11,7 +11,7 @@ pipeline {
 
     tools {
         // https://github.com/eclipse-cbi/jiro/wiki/Tools-(JDK,-Maven,-Ant)#jdk
-        jdk 'temurin-jdk11-latest'
+        jdk 'temurin-jdk21-latest'
     }
 
     environment {
@@ -26,7 +26,7 @@ pipeline {
         stage('Sanity check') {
             steps {
                 withVault([vaultSecrets: secrets]) {
-                    sh './gradlew assemble checkstyleMain -Peclipse.version=434 -Pbuild.invoker=CI --info --stacktrace'
+                    sh './gradlew assemble checkstyleMain -Peclipse.version=436 -Pbuild.invoker=CI --info --stacktrace'
                 }
                 
             }

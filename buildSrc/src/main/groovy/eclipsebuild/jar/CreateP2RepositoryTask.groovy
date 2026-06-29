@@ -1,24 +1,39 @@
 package eclipsebuild.jar
 
 import eclipsebuild.Config
+import eclipsebuild.LogOutputStream
 import org.gradle.api.DefaultTask
+import org.gradle.api.logging.LogLevel
+import org.gradle.api.provider.Property
+import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
+import org.gradle.process.ExecOperations
 
-class CreateP2RepositoryTask extends DefaultTask {
+import javax.inject.Inject
+
+abstract class CreateP2RepositoryTask extends DefaultTask {
 
     @InputDirectory
     File bundleSourceDir
 
+    @Input
+    abstract Property<String> getEclipseSdkExe()
+
     @OutputDirectory
     File targetRepositoryDir
 
+    @Inject
+    abstract ExecOperations getExecOperations()
+
     @TaskAction
     def createP2Repository() {
-        project.logger.info("Publish plugins and features from '${bundleSourceDir.absolutePath}' to the update site '${targetRepositoryDir.absolutePath}'")
-        project.exec {
-            commandLine(Config.on(project).eclipseSdkExe,
+        getLogger().info("Publish plugins and features from '${bundleSourceDir.absolutePath}' to the update site '${targetRepositoryDir.absolutePath}'")
+        getExecOperations().exec {
+            it.standardOutput = new LogOutputStream(getLogger(), LogLevel.INFO, LogOutputStream.Type.STDOUT)
+            it.errorOutput = new LogOutputStream(getLogger(), LogLevel.INFO, LogOutputStream.Type.STDERR)
+            it.commandLine(getEclipseSdkExe().get(),
                 '-nosplash',
                 '-application', 'org.eclipse.equinox.p2.publisher.FeaturesAndBundlesPublisher',
                 '-metadataRepository', targetRepositoryDir.toURI().toURL(),

@@ -11,6 +11,8 @@
 
 package eclipsebuild
 
+import groovy.xml.XmlSlurper
+
 import com.google.common.hash.HashFunction
 import com.google.common.hash.Hashing
 import eclipsebuild.jar.ExistingJarBundlePlugin
@@ -22,7 +24,9 @@ import org.gradle.api.attributes.Attribute
 import org.gradle.api.file.Directory
 import org.gradle.api.logging.LogLevel
 import org.gradle.api.provider.Provider
+import org.gradle.process.ExecOperations
 
+import javax.inject.Inject
 import java.nio.charset.StandardCharsets
 
 import static eclipsebuild.Constants.eclipseSdkDownloadClassifier
@@ -123,6 +127,11 @@ class BuildDefinitionPlugin implements Plugin<Project> {
             // convert GStrings to Strings in the versionMapping key to avoid lookup misses
             versionMapping = versionMapping.collectEntries { k, v -> [k.toString(), v] }
         }
+    }
+
+    interface InjectedExecOps {
+        @Inject
+        ExecOperations getExecOps()
     }
 
     // name of the root node in the DSL
@@ -252,32 +261,47 @@ class BuildDefinitionPlugin implements Plugin<Project> {
     }
 
     static void addTaskAssembleTargetPlatform(Project project, Config config) {
-        project.task(TASK_NAME_ASSEMBLE_TARGET_PLATFORM, dependsOn: [
-                TASK_NAME_VALIDATE_ECLIPSE_SDK,
-        ]) {
+        project.tasks.create(TASK_NAME_ASSEMBLE_TARGET_PLATFORM, AssembleTargetPlatformTask) {
+            dependsOn(TASK_NAME_VALIDATE_ECLIPSE_SDK)
             group = Constants.gradleTaskGroupName
             description = "Assembles an Eclipse distribution based on the target platform definition."
-            project.afterEvaluate { inputs.file config.targetPlatform.targetDefinition }
-            project.afterEvaluate { outputs.dir config.nonMavenizedTargetPlatformDir }
 
-            doLast { assembleTargetPlatform(project, config) }
+            project.afterEvaluate {
+                getTargetPlatformFile().set(config.targetPlatform.targetDefinition as File)
+                getNonMavenizedTargetPlatformDir().set(config.nonMavenizedTargetPlatformDir)
+            }
+
+            eclipseSdkExe.convention(project.provider { Config.on(project).eclipseSdkExe.path })
+            repositoryMirrorUrls.convention(project.hasProperty('repository.mirrors') ? project.property('repository.mirrors') as String : null)
 
             onlyIf {
-                HashFunction sha512HashFunction = Hashing.sha512()
-                String manifests = project.rootProject.allprojects
-                        .findAll { p -> p.plugins.hasPlugin(ExistingJarBundlePlugin) }
-                        .toSorted { p1, p2 -> p1.name <=> p2.name }
-                        .collect { p -> p.file("META-INF/MANIFEST.MF").exists() ? p.file("META-INF/MANIFEST.MF").text : null }
-                        .findAll { it != null }
-                        .join("\n")
-                String targetDef = config.targetPlatform.targetDefinition.text
-                String hashInput = manifests + "\n" + targetDef
-                String hash = sha512HashFunction.hashString(hashInput, StandardCharsets.UTF_8)
+                String hash = targetPlatformHash(project, config.targetPlatform.targetDefinition.text)
                 File digestFile = new File(config.nonMavenizedTargetPlatformDir, 'digest')
-                boolean digestMatch = digestFile.exists() ? digestFile.text == hash : false
-                !digestMatch
+
+                if (!digestFile.exists()) {
+                    project.logger.info("No digest file found in '${config.nonMavenizedTargetPlatformDir}'; reassemble the target platform.")
+                    return true
+                } else {
+                    boolean digestMatch = digestFile.text == hash
+                    if (!digestMatch) {
+                        project.logger.info("Target definition file or the manifest file of an existing jur bundle plugin has changed; reassemble the target platform.")
+                    }
+                    return !digestMatch
+                }
             }
         }
+    }
+
+    static String targetPlatformHash(Project project, String targetDefinitionText) {
+        HashFunction sha512HashFunction = Hashing.sha512()
+        String manifests = project.rootProject.allprojects
+                .findAll { p -> p.plugins.hasPlugin(ExistingJarBundlePlugin) }
+                .toSorted { p1, p2 -> p1.name <=> p2.name }
+                .collect { p -> p.file("META-INF/MANIFEST.MF").exists() ? p.file("META-INF/MANIFEST.MF").text : null }
+                .findAll { it != null }
+                .join("\n")
+        String hashInput = manifests + "\n" + targetDefinitionText
+        return sha512HashFunction.hashString(hashInput, StandardCharsets.UTF_8)
     }
 
     static void addTaskAddExistingJarsToTargetPlatform(Project project, Config config) {
@@ -297,7 +321,10 @@ class BuildDefinitionPlugin implements Plugin<Project> {
                 }
             }
 
-            doLast { addExistingJarsToTargetPlatform(project, config) }
+            doLast {
+                def execOps = project.objects.newInstance(InjectedExecOps)
+                addExistingJarsToTargetPlatform(project, config, execOps)
+            }
 
             onlyIf {
                 Task t = project.tasks[TASK_NAME_ASSEMBLE_TARGET_PLATFORM]
@@ -312,79 +339,23 @@ class BuildDefinitionPlugin implements Plugin<Project> {
         }
     }
 
-    static void assembleTargetPlatform(Project project, Config config) {
-        // if multiple builds start on the same machine (which is the case with a CI server)
-        // we want to prevent them assembling the same target platform at the same time
-        def lock = new FileSemaphore(config.nonMavenizedTargetPlatformDir)
-        try {
-            lock.lock()
-            assembleTargetPlatformUnprotected(project, config)
-        } finally {
-            lock.unlock()
-        }
-    }
-
-    static void addExistingJarsToTargetPlatform(Project project, Config config) {
+    static void addExistingJarsToTargetPlatform(Project project, Config config, InjectedExecOps execOps) {
         project.rootProject.allprojects.each { Project p ->
             if (p.plugins.hasPlugin(ExistingJarBundlePlugin)) {
                 String repo = new File(p.buildDir, ExistingJarBundlePlugin.P2_REPOSITORY_FOLDER).toURI().toURL().toString()
-                executeP2Director(p, config, repo, p.extensions.bundleInfo.bundleName.get())
+                executeP2Director(p, config, repo, p.extensions.bundleInfo.bundleName.get(), execOps)
             }
         }
     }
 
-    static void assembleTargetPlatformUnprotected(Project project, Config config) {
-        // delete the target platform directory to ensure that the P2 Director creates a fresh product
-        if (config.nonMavenizedTargetPlatformDir.exists()) {
-            project.logger.info("Delete mavenized platform directory '${config.nonMavenizedTargetPlatformDir}'")
-            config.nonMavenizedTargetPlatformDir.deleteDir()
-        }
-
-        // repository mirrors
-        def mirrors = [:]
-        if (project.hasProperty('repository.mirrors')) {
-            String allMirrors = project.property('repository.mirrors')
-            allMirrors.split(',').each {
-                if (!it.contains("->")) {
-                    throw new RuntimeException("Mirrors should be denoted as sourceUrl->targetUrl")
-                }
-                def mirror = it.split('->')
-                mirrors[mirror[0]] = mirror[1]
-            }
-        }
-
-        // collect  update sites and feature names
-        def updateSites = []
-        def features = []
-        def rootNode = new XmlSlurper().parseText(config.targetPlatform.targetDefinition.text)
-        rootNode.locations.location.each { location ->
-            String siteUrl = location.repository.@location.text().replace('\${project_loc}', 'file://' + project.projectDir.absolutePath)
-            if (mirrors[siteUrl]) {
-                updateSites.add(mirrors[siteUrl])
-            }
-            updateSites.add(siteUrl)
-            location.unit.each { unit -> features.add("${unit.@id}/${unit.@version}") }
-        }
-
-        // invoke the P2 director application to assemble install all features from the target
-        // definition file to the target platform: http://help.eclipse.org/luna/index.jsp?topic=%2Forg.eclipse.platform.doc.isv%2Fguide%2Fp2_director.html
-        project.logger.info("Assemble target platfrom in '${config.nonMavenizedTargetPlatformDir.absolutePath}'.\n    Update sites: '${updateSites.join(' ')}'\n    Features: '${features.join(' ')}'")
-
-        executeP2Director(project, config, updateSites.join(','), features.join(','))
-
-        HashFunction sha512HashFunction = Hashing.sha512()
-        String hash = sha512HashFunction.hashString(config.targetPlatform.targetDefinition.text, StandardCharsets.UTF_8)
-        new File(config.nonMavenizedTargetPlatformDir, 'digest').text = hash
-    }
-
-    private static void executeP2Director(Project project, Config config, String repositoryUrl, String installIU) {
-        project.exec {
+    private static void executeP2Director(Project project, Config config, String repositoryUrl, String installIU, InjectedExecOps execOps) {
+        execOps.execOps.exec {
 
             // redirect the external process output to the logging
-            standardOutput = new LogOutputStream(project.logger, LogLevel.INFO)
-            errorOutput = new LogOutputStream(project.logger, LogLevel.INFO)
+            it.standardOutput = new LogOutputStream(project.getLogger(), LogLevel.INFO, LogOutputStream.Type.STDOUT)
+            it.errorOutput = new LogOutputStream(project.getLogger(), LogLevel.INFO, LogOutputStream.Type.STDERR)
 
-            commandLine(config.eclipseSdkExe.path,
+            it.commandLine(config.eclipseSdkExe.path,
                     '-application', 'org.eclipse.equinox.p2.director',
                     '-repository', repositoryUrl,
                     '-uninstallIU', installIU,
@@ -400,16 +371,16 @@ class BuildDefinitionPlugin implements Plugin<Project> {
                     '-consoleLog',
                     '-vmargs', '-Declipse.p2.mirror=false')
 
-            ignoreExitValue = true
+            it.ignoreExitValue = true
         }
 
-        project.exec {
+        execOps.execOps.exec {
 
             // redirect the external process output to the logging
-            standardOutput = new LogOutputStream(project.logger, LogLevel.INFO)
-            errorOutput = new LogOutputStream(project.logger, LogLevel.INFO)
+            it.standardOutput = new LogOutputStream(project.getLogger(), LogLevel.INFO, LogOutputStream.Type.STDOUT)
+            it.errorOutput = new LogOutputStream(project.getLogger(), LogLevel.INFO, LogOutputStream.Type.STDERR)
 
-            commandLine(config.eclipseSdkExe.path,
+            it.commandLine(config.eclipseSdkExe.path,
                     '-application', 'org.eclipse.equinox.p2.director',
                     '-repository', repositoryUrl,
                     '-installIU', installIU,
@@ -433,11 +404,11 @@ class BuildDefinitionPlugin implements Plugin<Project> {
             description = "Converts the assembled Eclipse distribution to a Maven repository."
             project.afterEvaluate { inputs.dir config.nonMavenizedTargetPlatformDir }
             project.afterEvaluate { outputs.dir config.mavenizedTargetPlatformDir }
-            doLast { installTargetPlatform(project, config) }
+            doLast { installTargetPlatform(project, config, it) }
         }
     }
 
-    static void installTargetPlatform(Project project, Config config) {
+    static void installTargetPlatform(Project project, Config config, Task task) {
         // delete the mavenized target platform directory to ensure that the deployment doesn't
         // have outdated artifacts
         if (config.mavenizedTargetPlatformDir.exists()) {
@@ -447,7 +418,7 @@ class BuildDefinitionPlugin implements Plugin<Project> {
 
         // install bundles
         project.logger.info("Convert Eclipse target platform '${config.nonMavenizedTargetPlatformDir}' to Maven repository '${config.mavenizedTargetPlatformDir}'")
-        def deployer = new BundleMavenDeployer(project.ant, Constants.mavenizedEclipsePluginGroupName, project.logger)
+        def deployer = new BundleMavenDeployer(task.ant, Constants.mavenizedEclipsePluginGroupName, project.logger)
         deployer.deploy(config.nonMavenizedTargetPlatformDir, config.mavenizedTargetPlatformDir)
     }
 

@@ -1,5 +1,6 @@
 package eclipsebuild.testing;
 
+import java.time.Instant;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 interface EclipseTestEvent {
@@ -40,9 +41,11 @@ interface EclipseTestEvent {
             if (treeEntryMatch.matches()) {
                 this.testId = treeEntryMatch.group(1);
                 this.testName = treeEntryMatch.group(2);
+                updateTestClassAndMethod();
                 this.isSuite = Boolean.parseBoolean(treeEntryMatch.group(3));
                 this.testCount = Integer.parseInt(treeEntryMatch.group(4));
             }
+            updateTestClassAndMethod();
         }
 
         public boolean isSpock() {
@@ -64,43 +67,96 @@ interface EclipseTestEvent {
         public String getFullFeatureQualifier(){
             return spockSpec + "/" + spockFeature;
         }
+
+        @Override
+        public String getClassName() {
+            return spockSpec;
+        }
+
+        @Override
+        public String toString() {
+            return "TestTreeEntry{" +
+                    "isSpock=" + isSpock +
+                    ", spockSpec='" + spockSpec + '\'' +
+                    ", spockFeature='" + spockFeature + '\'' +
+                    ", testCount=" + testCount +
+                    ", isSuite=" + isSuite +
+                    ", spockIteration='" + spockIteration + '\'' +
+                    ", testId='" + testId + '\'' +
+                    ", testName='" + testName + '\'' +
+                    ", className='" + className + '\'' +
+                    ", methodName='" + methodName + '\'' +
+                    '}';
+        }
     }
 
     class TestRunStarted implements EclipseTestEvent {
         final int count;
 
-        TestRunStarted(int count){
+        TestRunStarted(int count) {
             this.count = count;
         }
 
         public String toString() {
-            return count + " " + super.toString();
+            return "TestRunStarted{" +
+                    "count=" + count +
+                    '}';
         }
     }
 
     class TestRunEnded implements EclipseTestEvent {
+        @Override
+        public String toString() {
+            return "TestRunEnded{}";
+        }
     }
 
     abstract class TestLifecycleCommon implements EclipseTestEvent {
 
         protected String testId;
         protected String testName;
+        protected String className = null;
+        protected String methodName = null;
+        protected final Instant when;
+
+        private static Pattern classAndMethodNamePattern = Pattern.compile("^(.+?)\\(([^)]+)\\)$");
 
         public TestLifecycleCommon(String testId, String testName) {
+            when = Instant.now();
             this.testId = testId;
             this.testName = testName;
+            updateTestClassAndMethod();
+        }
+
+        void updateTestClassAndMethod() {
+            if (this.testName != null) {
+                Matcher matcher = classAndMethodNamePattern.matcher(testName);
+                if (matcher.matches()) {
+                    this.methodName = matcher.group(1);
+                    this.className = matcher.group(2);
+                }
+            }
+
         }
 
         public String getTestId() {
-            return testId;// + " " + testName.hashCode();
+            return testId;
         }
 
         public String getTestName() {
             return testName;
         }
 
-        public String toString() {
-            return testId + ":" + testName;
+        public String getClassName() {
+            return className;
+        }
+
+        public String getMethodName() {
+            return methodName;
+        }
+
+        public Instant getWhen() {
+            return when;
         }
     }
 
@@ -109,11 +165,31 @@ interface EclipseTestEvent {
         public TestStarted(String testId, String testName) {
             super(testId, testName);
         }
+
+        @Override
+        public String toString() {
+            return "TestStarted{" +
+                    "testId='" + testId + '\'' +
+                    ", testName='" + testName + '\'' +
+                    ", className='" + className + '\'' +
+                    ", methodName='" + methodName + '\'' +
+                    '}';
+        }
     }
 
     class TestEnded extends TestLifecycleCommon  {
         public TestEnded(String testId, String testName) {
             super(testId, testName);
+        }
+
+        @Override
+        public String toString() {
+            return "TestEnded{" +
+                    "testId='" + testId + '\'' +
+                    ", testName='" + testName + '\'' +
+                    ", className='" + className + '\'' +
+                    ", methodName='" + methodName + '\'' +
+                    '}';
         }
     }
 
@@ -145,6 +221,19 @@ interface EclipseTestEvent {
 
         public String getActual() {
             return actual;
+        }
+
+        @Override
+        public String toString() {
+            return "TestFailed{" +
+                    "testId='" + testId + '\'' +
+                    ", testName='" + testName + '\'' +
+                    ", className='" + className + '\'' +
+                    ", methodName='" + methodName + '\'' +
+                    ", status=" + status +
+                    ", expected='" + expected + '\'' +
+                    ", actual='" + actual + '\'' +
+                    '}';
         }
     }
 }

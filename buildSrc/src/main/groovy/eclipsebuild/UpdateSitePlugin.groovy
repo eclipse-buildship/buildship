@@ -11,11 +11,20 @@
 
 package eclipsebuild
 
+import groovy.xml.XmlParser
+import groovy.xml.XmlNodePrinter
+
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.Task
 import org.gradle.api.artifacts.ProjectDependency
 import org.gradle.api.file.FileCollection
+import org.gradle.api.logging.LogLevel
+import org.gradle.api.logging.Logger
 import org.gradle.api.plugins.JavaPlugin
+import org.gradle.process.ExecOperations
+
+import javax.inject.Inject
 
 /**
  * Gradle plugin for building Eclipse update sites.
@@ -110,14 +119,15 @@ class UpdateSitePlugin implements Plugin<Project> {
             group = Constants.gradleTaskGroupName
             description = 'Collects the bundles that make up the update site.'
             outputs.dir new File(project.buildDir, UNSIGNED_BUNDLES_DIR_NAME)
-            doLast { copyBundles(project) }
+            doLast { copyBundles(project, it) }
         }
 
         // add inputs for each plugin/feature project once this build script has been evaluated (before that, the dependencies are empty)
         project.afterEvaluate {
             for (ProjectDependency projectDependency : project.configurations.localPlugin.dependencies.withType(ProjectDependency)) {
               // check if the dependent project is a bundle or feature, once its build script has been evaluated
-              def dependency = projectDependency.dependencyProject
+
+              def dependency = project.project(projectDependency.path)
                 if (dependency.plugins.hasPlugin(BundlePlugin)) {
                     copyBundlesTask.inputs.files dependency.tasks.jar.outputs.files
                     copyBundlesTask.inputs.files dependency.tasks.sourcesJar.outputs.files
@@ -135,7 +145,7 @@ class UpdateSitePlugin implements Plugin<Project> {
         project.afterEvaluate {
             for (ProjectDependency projectDependency : project.configurations.localFeature.dependencies.withType(ProjectDependency)) {
               // check if the dependent project is a bundle or feature, once its build script has been evaluated
-              def dependency = projectDependency.dependencyProject
+                def dependency = project.project(projectDependency.path)
                 if (dependency.plugins.hasPlugin(FeaturePlugin)) {
                     copyBundlesTask.inputs.files dependency.tasks.jar.outputs.files
                 } else {
@@ -150,7 +160,7 @@ class UpdateSitePlugin implements Plugin<Project> {
         }
     }
 
-    static void copyBundles(Project project) {
+    static void copyBundles(Project project, Task task) {
         def rootDir = new File(project.buildDir, UNSIGNED_BUNDLES_DIR_NAME)
         def pluginsDir = new File(rootDir, PLUGINS_DIR_NAME)
         def featuresDir = new File(rootDir, FEATURES_DIR_NAME)
@@ -164,7 +174,7 @@ class UpdateSitePlugin implements Plugin<Project> {
         // iterate over all the project dependencies to populate the update site with the plugins and features
         project.logger.info("Copy features and plugins to bundles directory '${rootDir.absolutePath}'")
         for (ProjectDependency projectDependency : project.configurations.localPlugin.dependencies.withType(ProjectDependency)) {
-            def dependency = projectDependency.dependencyProject
+            def dependency = project.project(projectDependency.path)
 
             // copy the output jar for each plugin project dependency
             if (dependency.plugins.hasPlugin(BundlePlugin)) {
@@ -181,7 +191,7 @@ class UpdateSitePlugin implements Plugin<Project> {
         }
 
         for (ProjectDependency projectDependency : project.configurations.localFeature.dependencies.withType(ProjectDependency)) {
-            def dependency = projectDependency.dependencyProject
+            def dependency = project.project(projectDependency.path)
 
             // copy the output jar for each feature project dependency
             if (dependency.plugins.hasPlugin(FeaturePlugin)) {
@@ -203,7 +213,7 @@ class UpdateSitePlugin implements Plugin<Project> {
             // extract the jars and delete the the sums from the manifest file
             pluginsDir.eachFile { jar ->
                 def extractedJar = new File(jar.parentFile, jar.name + ".u")
-                project.ant.unzip(src: jar, dest: new File(jar.parentFile, jar.name + ".u"))
+                task.ant.unzip(src: jar, dest: new File(jar.parentFile, jar.name + ".u"))
                 jar.delete()
                 def manifest = new File(extractedJar, "META-INF/MANIFEST.MF")
                 removeSignaturesFromManifest(manifest)
@@ -211,7 +221,7 @@ class UpdateSitePlugin implements Plugin<Project> {
             // re-jar the content without the signature files
             pluginsDir.eachFile { extractedJar ->
                 def jar = new File(extractedJar.parentFile, extractedJar.name.substring(0, extractedJar.name.length() - 2))
-                project.ant.zip(destfile: jar, basedir: extractedJar) {
+                task.ant.zip(destfile: jar, basedir: extractedJar) {
                     exclude(name: '**/*.RSA')
                     exclude(name: '**/*.DSA')
                     exclude(name: '**/*.SF')
@@ -256,6 +266,13 @@ class UpdateSitePlugin implements Plugin<Project> {
         }
     }
 
+    interface InjectedExecOps {
+        @Inject
+        Logger getLogger()
+        @Inject
+        ExecOperations getExecOps()
+    }
+
     static void addTaskCompressBundles(Project project) {
         project.task(COMPRESS_BUNDLES_TASK_NAME, dependsOn: [
             COPY_BUNDLES_TASK_NAME, SIGN_BUNDLES_TASK_NAME, ":${BuildDefinitionPlugin.TASK_NAME_INSTALL_TARGET_PLATFORM}"]) {
@@ -263,11 +280,14 @@ class UpdateSitePlugin implements Plugin<Project> {
                 description = 'Compresses the bundles that make up the update using the pack200 tool.'
                 project.afterEvaluate { inputs.dir project.updateSite.signing != null ? new File(project.buildDir, SIGNED_BUNDLES_DIR_NAME) : new File(project.buildDir, UNSIGNED_BUNDLES_DIR_NAME) }
                 outputs.dir  new File(project.buildDir, COMPRESSED_BUNDLES_DIR_NAME)
-                doLast { compressBundles(project) }
+                doLast {
+                    InjectedExecOps execOps = project.objects.newInstance(InjectedExecOps)
+                    compressBundles(project, execOps)
+                }
         }
     }
 
-    static void compressBundles(Project project) {
+    static void compressBundles(Project project, InjectedExecOps execOps) {
         File uncompressedBundles = project.updateSite.signing != null ? new File(project.buildDir, SIGNED_BUNDLES_DIR_NAME) : new File(project.buildDir, UNSIGNED_BUNDLES_DIR_NAME)
         File compressedBundles = new File(project.buildDir, COMPRESSED_BUNDLES_DIR_NAME)
 
@@ -278,10 +298,12 @@ class UpdateSitePlugin implements Plugin<Project> {
         }
 
         // compress and store them in the same folder
-        project.javaexec {
-            main = 'org.eclipse.equinox.internal.p2.jarprocessor.Main'
-            classpath Config.on(project).jarProcessorJar
-            args = ['-pack',
+        execOps.execOps.javaexec {
+            it.standardOutput = new LogOutputStream(project.logger, LogLevel.INFO, LogOutputStream.Type.STDOUT)
+            it.errorOutput = new LogOutputStream(project.logger, LogLevel.INFO, LogOutputStream.Type.STDERR)
+            it.mainClass.set('org.eclipse.equinox.internal.p2.jarprocessor.Main')
+            it.classpath Config.on(project).jarProcessorJar
+            it.args = ['-pack',
                     '-outputDir', compressedBundles,
                     compressedBundles
             ]
@@ -297,13 +319,16 @@ class UpdateSitePlugin implements Plugin<Project> {
                 inputs.files project.updateSite.extraResources
                 inputs.dir new File(project.buildDir, COMPRESSED_BUNDLES_DIR_NAME)
                 outputs.dir new File(project.buildDir, REPOSITORY_DIR_NAME)
-                doLast { createP2Repository(project) }
+                doLast {
+                    InjectedExecOps execOps = project.objects.newInstance(InjectedExecOps)
+                    createP2Repository(project, it, execOps)
+                }
         }
 
         project.tasks.assemble.dependsOn createP2RepositoryTask
     }
 
-    static void createP2Repository(Project project) {
+    static void createP2Repository(Project project, Task task, InjectedExecOps execOps) {
         def repositoryDir = new File(project.buildDir, REPOSITORY_DIR_NAME)
 
         // delete old content
@@ -313,22 +338,24 @@ class UpdateSitePlugin implements Plugin<Project> {
         }
 
         // create the P2 update site
-        publishContentToLocalP2Repository(project, repositoryDir)
+        publishContentToLocalP2Repository(project, repositoryDir, execOps)
 
         // add custom properties to the artifacts.xml file
         def mutateArtifactsXml = project.updateSite.mutateArtifactsXml
         if (mutateArtifactsXml) {
-            updateArtifactsXmlFromArchive(project, repositoryDir, mutateArtifactsXml)
+            updateArtifactsXmlFromArchive(project, repositoryDir, mutateArtifactsXml, task)
         }
     }
 
-    static void publishContentToLocalP2Repository(Project project, File repositoryDir) {
+    static void publishContentToLocalP2Repository(Project project, File repositoryDir, InjectedExecOps execOps) {
         def rootDir = new File(project.buildDir, COMPRESSED_BUNDLES_DIR_NAME)
 
         // publish features/plugins to the update site
         project.logger.info("Publish plugins and features from '${rootDir.absolutePath}' to the update site '${repositoryDir.absolutePath}'")
-        project.exec {
-            commandLine(Config.on(project).eclipseSdkExe,
+        execOps.execOps.exec {
+            it.standardOutput = new LogOutputStream(project.logger, LogLevel.INFO, LogOutputStream.Type.STDOUT)
+            it.errorOutput = new LogOutputStream(project.logger, LogLevel.INFO, LogOutputStream.Type.STDERR)
+            it.commandLine(Config.on(project).eclipseSdkExe,
                     '-nosplash',
                     '-application', 'org.eclipse.equinox.p2.publisher.FeaturesAndBundlesPublisher',
                     '-metadataRepository', repositoryDir.toURI().toURL(),
@@ -343,8 +370,10 @@ class UpdateSitePlugin implements Plugin<Project> {
 
         // publish P2 category defined in the category.xml to the update site
         project.logger.info("Publish categories defined in '${project.updateSite.siteDescriptor.absolutePath}' to the update site '${repositoryDir.absolutePath}'")
-        project.exec {
-            commandLine(Config.on(project).eclipseSdkExe,
+        execOps.execOps.exec {
+            it.standardOutput = new LogOutputStream(project.logger, LogLevel.INFO, LogOutputStream.Type.STDOUT)
+            it.errorOutput = new LogOutputStream(project.logger, LogLevel.INFO, LogOutputStream.Type.STDERR)
+            it.commandLine(Config.on(project).eclipseSdkExe,
                     '-nosplash',
                     '-application', 'org.eclipse.equinox.p2.publisher.CategoryPublisher',
                     '-metadataRepository', repositoryDir.toURI().toURL(),
@@ -360,7 +389,7 @@ class UpdateSitePlugin implements Plugin<Project> {
         }
     }
 
-    static void updateArtifactsXmlFromArchive(Project project, File repositoryLocation, Closure mutateArtifactsXml) {
+    static void updateArtifactsXmlFromArchive(Project project, File repositoryLocation, Closure mutateArtifactsXml, Task task) {
         // get the artifacts.xml file from the artifacts.jar
         def artifactsJarFile = new File(repositoryLocation, "artifacts.jar")
         def artifactsXmlFile = project.zipTree(artifactsJarFile).matching { 'artifacts.xml' }.singleFile
@@ -374,7 +403,7 @@ class UpdateSitePlugin implements Plugin<Project> {
         // write the updated artifacts.xml back to its source
         // the artifacts.xml is a temporary file hence it has to be copied back to the archive
         new XmlNodePrinter(new PrintWriter(new FileWriter(artifactsXmlFile)), "  ", "'").print(xml)
-        project.ant.zip(update: true, filesonly: true, destfile: artifactsJarFile) { fileset(file: artifactsXmlFile) }
+        task.ant.zip(update: true, filesonly: true, destfile: artifactsJarFile) { fileset(file: artifactsXmlFile) }
     }
 
     static void validateRequiredFilesExist(Project project) {
