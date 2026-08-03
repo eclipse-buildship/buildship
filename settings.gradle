@@ -2,6 +2,9 @@
 plugins {
     id("com.gradle.develocity") version "4.4.0"
     id("com.gradle.common-custom-user-data-gradle-plugin") version "2.4.0"
+    // the build needs Java 8 for the compat bundle and for the Eclipse test runtime, which is no
+    // longer installed on the CI agents; download the toolchains that the machine doesn't have
+    id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
 }
 
 
