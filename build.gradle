@@ -48,13 +48,16 @@ def targetPlatformIds = [
         '435',
         '436',
         '437',
+        '438',
+        '439',
+        '440',
 ]
 
 // target platform definition for all major Eclipse releases between version 4.3 and 4.8
 // the default version is 48 which can be overridden through -Peclipse.version=<version>
 // also the target platforms contain 1) the Eclipse SDK 2) the latest junit 3) SWTBot 2.2.1
 eclipseBuild {
-    defaultEclipseVersion = '434'
+    defaultEclipseVersion = '440'
     // TODO make the default targetPlatformIds.last() after adding support for running builds on Java 17. e424+ builds should run on Java 17.
 
     final def swtPluginId = "org.eclipse.swt.${ECLIPSE_WS}.${ECLIPSE_OS}.${ECLIPSE_ARCH}"
@@ -169,8 +172,13 @@ subprojects {
     tasks.withType(EclipseTestTask).all {
         def java8 = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(8) }
         def java11 = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(11) }
-        jvmArgs "-Djdk8.location=${java8.get().metadata.installationPath.asFile}"
-        jvmArgs "-Djdk11.location=${java11.get().metadata.installationPath.asFile}"
+        def realJavaHome = { launcher ->
+            new File(launcher.get().metadata.installationPath.asFile, 'bin').canonicalFile.parentFile
+        }
+        def java8Home = realJavaHome(java8)
+        def java11Home = realJavaHome(java11)
+        jvmArgs "-Djdk8.location=${java8Home}"
+        jvmArgs "-Djdk11.location=${java11Home}"
 
         def config = Config.on(project)
         if (config.targetPlatform.eclipseVersion in ['48', '49', '410', '411', '412', '413', '414', '415', '416', '417', '418', '419', '420', '421', '422', '423', '424', '425', '426', '427', '428']) {

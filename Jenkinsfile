@@ -26,7 +26,7 @@ pipeline {
         stage('Sanity check') {
             steps {
                 withVault([vaultSecrets: secrets]) {
-                    sh './gradlew assemble checkstyleMain -Peclipse.version=436 -Pbuild.invoker=CI --info --stacktrace'
+                    sh './gradlew assemble checkstyleMain -Peclipse.version=440 -Pbuild.invoker=CI --info --stacktrace'
                 }
                 
             }

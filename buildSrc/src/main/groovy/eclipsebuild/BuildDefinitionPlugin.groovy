@@ -139,6 +139,7 @@ class BuildDefinitionPlugin implements Plugin<Project> {
 
     // task names
     static final String TASK_NAME_DOWNLOAD_ECLIPSE_SDK = "downloadEclipseSdk"
+    static final String TASK_NAME_PREPARE_ECLIPSE_SDK = "prepareEclipseSdk"
     static final String TASK_NAME_VALIDATE_ECLIPSE_SDK = "validateEclipseSdk"
     static final String TASK_NAME_ASSEMBLE_TARGET_PLATFORM = "assembleTargetPlatform"
     static final String TASK_NAME_ADD_EXISTING_JAR_BUNDLES_TO_TARGET_PLATFORM = "addExistingJarBundlesToTargetPlatform"
@@ -155,6 +156,7 @@ class BuildDefinitionPlugin implements Plugin<Project> {
         Config config = Config.on(project)
         createEclipseSdkDependencies(project)
         validateDslBeforeBuildStarts(project, config)
+        addTaskPrepareEclipseSdk(project, config)
         validateEclipseDownLoad(project, config)
         addTaskAssembleTargetPlatform(project, config)
         addTaskAddExistingJarsToTargetPlatform(project, config)
@@ -239,19 +241,40 @@ class BuildDefinitionPlugin implements Plugin<Project> {
         }
     }
 
-    def static validateEclipseDownLoad(Project project, Config config) {
-        project.task(TASK_NAME_VALIDATE_ECLIPSE_SDK) {
-            description = "Validates the Eclipse SDK download."
+    static void addTaskPrepareEclipseSdk(Project project, Config config) {
+        project.task(TASK_NAME_PREPARE_ECLIPSE_SDK) {
+            description = "Copies the unpacked Eclipse SDK out of the immutable artifact transform cache into a writable location."
             def sdkFiles = project.configurations.eclipseSdks.incoming.artifactView {
                 attributes.attribute(artifactType, ARTIFACT_TYPE_NAME)
             }.files
             inputs.dir sdkFiles.singleFile
 
             doLast {
-                def sdk = sdkFiles.singleFile
-                if (sdk == null) {
-                    throw new RuntimeException("Eclipse SDK download failed. Please check the log for details.")
+                File source = sdkFiles.singleFile
+                File dest = eclipseSdkCopyDir(project)
+                File exe = new File(dest, Constants.eclipseExePath)
+                if (!exe.exists()) {
+                    project.logger.info("Copy Eclipse SDK from '${source}' to '${dest}'")
+                    project.copy {
+                        from source
+                        into dest
+                    }
+                    exe.setExecutable(true)
                 }
+            }
+        }
+    }
+
+    static File eclipseSdkCopyDir(Project project) {
+        new File(project.rootProject.buildDir, "tooling/eclipse-sdk")
+    }
+
+    def static validateEclipseDownLoad(Project project, Config config) {
+        project.task(TASK_NAME_VALIDATE_ECLIPSE_SDK, dependsOn: TASK_NAME_PREPARE_ECLIPSE_SDK) {
+            description = "Validates the Eclipse SDK download."
+
+            doLast {
+                def sdk = eclipseSdkCopyDir(project)
                 if (!sdk.exists()) {
                     throw new RuntimeException("Eclipse SDK download failed. File '${sdk}' does not exist.")
                 }
