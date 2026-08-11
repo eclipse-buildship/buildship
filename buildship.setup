@@ -22,15 +22,17 @@
     <requirement
         name="org.eclipse.emf.ecoretools.design.feature.group"/>
     <repository
-        url="https://groovy.jfrog.io/artifactory/plugins-release/org/codehaus/groovy/groovy-eclipse-integration/5.7.0/e4.35"/>
+        url="https://groovy.jfrog.io/artifactory/plugins-release/org/codehaus/groovy/groovy-eclipse-integration/6.2.0/e4.40"/>
     <repository
-        url="https://groovy.jfrog.io/artifactory/plugins-release/org/codehaus/groovy/groovy-eclipse-integration/5.7.0/e4.34"/>
+        url="https://groovy.jfrog.io/artifactory/plugins-release/org/codehaus/groovy/groovy-eclipse-integration/6.2.0/e4.39"/>
     <repository
-        url="https://groovy.jfrog.io/artifactory/plugins-release/org/codehaus/groovy/groovy-eclipse-integration/5.7.0/e4.33"/>
+        url="https://groovy.jfrog.io/artifactory/plugins-release/org/codehaus/groovy/groovy-eclipse-integration/6.2.0/e4.38"/>
     <repository
-        url="https://groovy.jfrog.io/artifactory/plugins-release/org/codehaus/groovy/groovy-eclipse-integration/5.7.0/e4.32"/>
+        url="https://groovy.jfrog.io/artifactory/plugins-release/org/codehaus/groovy/groovy-eclipse-integration/6.2.0/e4.37"/>
     <repository
-        url="https://groovy.jfrog.io/artifactory/plugins-release/org/codehaus/groovy/groovy-eclipse-integration/5.7.0/e4.31"/>
+        url="https://groovy.jfrog.io/artifactory/plugins-release/org/codehaus/groovy/groovy-eclipse-integration/6.2.0/e4.36"/>
+    <repository
+        url="https://groovy.jfrog.io/artifactory/plugins-release/org/codehaus/groovy/groovy-eclipse-integration/6.2.0/e4.35"/>
   </setupTask>
   <setupTask
       xsi:type="setup:CompoundTask"
@@ -85,6 +87,13 @@
           xsi:type="jdt:JRETask"
           version="JavaSE-11"
           location="${jre.location-11}"/>
+      <setupTask
+          xsi:type="jdt:JRETask"
+          id="buildship.preferences.compiler.jre21"
+          version="JavaSE-21"
+          location="${jre.location-21}">
+        <description>The bundles that depend on the platform declare JavaSE-21, matching the newest supported Eclipse release. Register a strictly compatible JRE so their JRE containers resolve without a "no strictly compatible JRE" warning.</description>
+      </setupTask>
     </setupTask>
   </setupTask>
   <setupTask
@@ -100,22 +109,24 @@
         xsi:type="setup:PreferenceTask"
         id="buildship.preferences.compiler.source"
         key="instance/org.eclipse.jdt.core/org.eclipse.jdt.core.compiler.source"
-        value="1.8"/>
+        value="21"/>
     <setupTask
         xsi:type="setup:PreferenceTask"
         id="buildship.preferences.compiler.compilance"
         key="instance/org.eclipse.jdt.core/org.eclipse.jdt.core.compiler.compliance"
-        value="1.8"/>
+        value="21"/>
     <setupTask
         xsi:type="setup:PreferenceTask"
         id="buildship.preferences.compiler.codegen"
         key="instance/org.eclipse.jdt.core/org.eclipse.jdt.core.compiler.codegen.targetPlatform"
-        value="1.8"/>
+        value="21">
+      <description>Must match the execution environment the bundle manifests declare. PDE derives each project's compliance from its Bundle-RequiredExecutionEnvironment, and JDT compares that value against the class file version of the target platform bundles on the build path. A lower value makes JDT report "Incompatible .class files version in required binaries", which is a build path error and stops the project from compiling at all.</description>
+    </setupTask>
     <setupTask
         xsi:type="setup:PreferenceTask"
         id="buildship.preferences.compiler.goovycompilerlevel"
         key="instance/org.codehaus.groovy.eclipse.compilerResolver/groovy.compiler.level"
-        value="25">
+        value="30">
       <description>Align workspace Groovy compiler level to referenced libs</description>
     </setupTask>
     <setupTask

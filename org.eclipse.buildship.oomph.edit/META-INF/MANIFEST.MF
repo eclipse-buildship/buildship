@@ -9,7 +9,7 @@ Bundle-ClassPath: .
 Bundle-Activator: org.eclipse.buildship.oomph.provider.GradleImportEditPlugin$Implementation
 Bundle-ActivationPolicy: lazy
 Bundle-Localization: plugin
-Bundle-RequiredExecutionEnvironment: JavaSE-11
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Require-Bundle: org.eclipse.core.runtime,
  org.eclipse.emf.ecore;bundle-version="[2.10.0,3.0.0)",
  org.eclipse.emf.edit;bundle-version="[2.10.0,3.0.0)";visibility:=reexport,

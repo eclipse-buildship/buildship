@@ -4,7 +4,7 @@ Bundle-Name: Buildship, Eclipse Plug-ins for Gradle - gradle.properties editor t
 Bundle-SymbolicName: org.eclipse.buildship.gradleprop.test;singleton:=true
 Bundle-Version: 3.1.12.qualifier
 Bundle-Vendor: Eclipse Buildship
-Bundle-RequiredExecutionEnvironment: JavaSE-11
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Fragment-Host: org.eclipse.buildship.gradleprop.provider
 Comment: junit has to be a required bundle, otherwise the tests won't launch for headless builds
 Require-Bundle: org.eclipse.swtbot.eclipse.finder,
