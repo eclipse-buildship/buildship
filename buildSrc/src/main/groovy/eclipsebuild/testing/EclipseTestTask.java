@@ -4,15 +4,16 @@ import com.google.common.io.MoreFiles;
 import com.google.common.io.RecursiveDeleteOption;
 import eclipsebuild.Constants;
 import eclipsebuild.LogOutputStream;
+import org.apache.bcel.classfile.ClassParser;
+import org.apache.bcel.classfile.JavaClass;
 import org.eclipse.jdt.internal.junit.model.ITestRunListener2;
 import org.eclipse.jdt.internal.junit.model.RemoteTestRunnerClient;
 import org.gradle.api.GradleException;
 import org.gradle.api.file.Directory;
 import org.gradle.api.file.DirectoryProperty;
+import org.gradle.api.file.EmptyFileVisitor;
 import org.gradle.api.file.FileTree;
-import org.gradle.api.internal.tasks.testing.TestClassProcessor;
-import org.gradle.api.internal.tasks.testing.TestClassRunInfo;
-import org.gradle.api.internal.tasks.testing.TestResultProcessor;
+import org.gradle.api.file.FileVisitDetails;
 import org.gradle.api.logging.LogLevel;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
@@ -101,7 +102,7 @@ public abstract class EclipseTestTask extends JavaExec {
         programArgs.add("org.eclipse.jdt.junit5.runtime");
         programArgs.add("-classNames");
 
-        List<String> testNames = new ArrayList<>(collectTestNames(this));
+        List<String> testNames = new ArrayList<>(collectTestNames(getClasspath().getAsFileTree()));
         Collections.sort(testNames);
         programArgs.addAll(testNames);
 
@@ -242,36 +243,36 @@ public abstract class EclipseTestTask extends JavaExec {
         return null;
     }
 
-    private List<String> collectTestNames(EclipseTestTask testTask) {
-        ClassNameCollectingProcessor processor = new ClassNameCollectingProcessor();
-        Runnable detector;
-        final FileTree testClassFiles = testTask.getClasspath().getAsFileTree();
-        new EclipsePluginTestClassScanner(testClassFiles, processor).run();
-        LOGGER.info("collected test class names: {}", processor.classNames);
-        return processor.classNames;
+    /**
+     * Collects the names of the classes the PDE test runner should run, which are the top level,
+     * concrete classes on the given classpath.
+     */
+    static List<String> collectTestNames(FileTree testClassFiles) {
+        List<String> classNames = new ArrayList<String>();
+        testClassFiles.visit(new EmptyFileVisitor() {
+
+            @Override
+            public void visitFile(FileVisitDetails fileDetails) {
+                if (!isTestClassFile(fileDetails.getFile())) {
+                    return;
+                }
+                classNames.add(fileDetails.getRelativePath().getPathString().replaceAll("\\.class", "").replace('/', '.'));
+            }
+        });
+        LOGGER.info("collected test class names: {}", classNames);
+        return classNames;
     }
 
-    private class ClassNameCollectingProcessor implements TestClassProcessor {
-        public List<String> classNames = new ArrayList<String>();
-
-        @Override
-        public void startProcessing(TestResultProcessor testResultProcessor) {
-            // no-op
+    private static boolean isTestClassFile(File file) {
+        if (!file.getAbsolutePath().endsWith(".class") || file.getAbsolutePath().contains("$")) {
+            return false;
         }
-
-        @Override
-        public void processTestClass(TestClassRunInfo testClassRunInfo) {
-            this.classNames.add(testClassRunInfo.getTestClassName());
-        }
-
-        @Override
-        public void stop() {
-            // no-op
-        }
-
-        @Override
-        public void stopNow() {
-            // no-op
+        try {
+            JavaClass javaClass = new ClassParser(file.getAbsolutePath()).parse();
+            return !javaClass.isAbstract() && !javaClass.isInterface();
+        } catch (Exception e) {
+            LOGGER.warn("Cannot determine whether {} holds tests, skipping it", file, e);
+            return false;
         }
     }
 }
