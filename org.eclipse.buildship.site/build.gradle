@@ -13,7 +13,8 @@ buildscript {
 updateSite {
     extraResources = files('epl-v20.html', 'notice.html', 'p2.index')
     signing = { File unsignedFolder, File signedFolder ->
-        if (gradle.taskGraph.hasTask(uploadUpdateSite)) {
+        // -PsignWithEclipseService lets a developer exercise the remote signing without publishing
+        if (gradle.taskGraph.hasTask(uploadUpdateSite) || project.hasProperty('signWithEclipseService')) {
             signWithEclipseService(signedFolder, unsignedFolder)
         } else {
             signLocally(unsignedFolder, signedFolder)
@@ -205,23 +206,35 @@ def releaseStream() {
     "${matcher[0][1]}.x"
 }
 
-private void signWithEclipseService(signedFolder, unsignedFolder) {
-    file(unsignedFolder).eachFileRecurse(groovy.io.FileType.FILES) { File source ->
-        if(source.name.endsWith('.jar')) {
-            String sourceRelativePath = source.path.replace(unsignedFolder.path + System.getProperty('file.separator'), '')
-            File target = new File(signedFolder, sourceRelativePath)
-            target.parentFile.mkdirs()
-            def cmd = "${file('sign-jar.sh').absolutePath} $ECLIPSE_ORG_FTP_HOST $ECLIPSE_ORG_FTP_USER $ECLIPSE_ORG_FTP_PASSWORD ${project.rootProject.file('gradle/ssh/known_hosts').absolutePath} ${source.absolutePath} ${target.absolutePath}"
-            def sout = new StringBuilder()
-            def serr = new StringBuilder()
-            def process = cmd.execute()
-            process.consumeProcessOutput(sout, serr)
-            def exitCode = process.waitFor()
-            System.out.println(sout)
-            System.err.println(serr)
-            if (exitCode != 0) {
-                throw new RuntimeException("Signing failed for " + source.name)
+private void signWithEclipseService(File signedFolder, File unsignedFolder) {
+    def execOps = project.objects.newInstance(eclipsebuild.UpdateSitePlugin.InjectedExecOps).execOps
+    def signJars = file('sign-jars.sh').absolutePath
+    def knownHosts = project.rootProject.file('gradle/ssh/known_hosts').absolutePath
+
+    // the eclipse.org signing service drops connections often enough that a release regularly
+    // fails on a single bundle, so give the whole batch a few attempts before giving up
+    withRetries(3, 'Signing the bundles with the Eclipse signing service') {
+        execOps.exec {
+            commandLine signJars, ECLIPSE_ORG_FTP_HOST, ECLIPSE_ORG_FTP_USER, knownHosts, unsignedFolder.absolutePath, signedFolder.absolutePath
+            // passed in the environment so that the password never lands in the process list
+            environment 'SSHPASS', ECLIPSE_ORG_FTP_PASSWORD
+        }
+    }
+}
+
+private void withRetries(int attempts, String description, Closure action) {
+    for (int attempt = 1; ; attempt++) {
+        try {
+            action()
+            return
+        } catch (Exception e) {
+            if (attempt >= attempts) {
+                throw new GradleException("$description failed after $attempts attempts", e)
             }
+            int waitSeconds = 15 * attempt
+            logger.lifecycle("$description failed on attempt $attempt of $attempts: ${e.message}")
+            logger.lifecycle("Retrying in $waitSeconds seconds")
+            Thread.sleep(waitSeconds * 1000L)
         }
     }
 }

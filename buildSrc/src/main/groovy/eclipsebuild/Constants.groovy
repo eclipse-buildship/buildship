@@ -128,6 +128,23 @@ class Constants {
     }
 
     /**
+     * Returns the arguments to pass to the JVM that runs a p2 application in the Eclipse SDK.
+     * <p>
+     * JDK 26 is the first JDK that ships a populated {@code conf/jaxp.properties}, which caps the
+     * size of a parsed XML document at 100 kB. The content.xml of an Eclipse release train is far
+     * beyond that - the 2026-06 one is about 28 MB - so without lifting the two size limits the p2
+     * director cannot read the repository at all and fails with JAXP00010003 / JAXP00010004.
+     *
+     * @return the arguments to append to the Eclipse SDK command line, starting with -vmargs
+     */
+    static List<String> getP2VmArgs() {
+        ['-vmargs',
+         '-Declipse.p2.mirror=false',
+         '-Djdk.xml.maxGeneralEntitySizeLimit=0',
+         '-Djdk.xml.totalEntitySizeLimit=0']
+    }
+
+    /**
      * Sets some constants in the target project's build script.
      */
     static exposePublicConstantsFor(Project project) {

@@ -392,7 +392,7 @@ class BuildDefinitionPlugin implements Plugin<Project> {
                     '-roaming',
                     '-nosplash',
                     '-consoleLog',
-                    '-vmargs', '-Declipse.p2.mirror=false')
+                    *Constants.p2VmArgs)
 
             it.ignoreExitValue = true
         }
@@ -417,7 +417,7 @@ class BuildDefinitionPlugin implements Plugin<Project> {
                     '-roaming',
                     '-nosplash',
                     '-consoleLog',
-                    '-vmargs', '-Declipse.p2.mirror=false')
+                    *Constants.p2VmArgs)
         }
     }
 
