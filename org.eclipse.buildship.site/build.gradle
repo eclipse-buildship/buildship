@@ -83,6 +83,7 @@ task uploadUpdateSite(dependsOn : createP2Repository) {
 
         // upload the update site and update the composite descriptors
         def directoriesInCompositeUpdateSite = eclipsebuild.BuildshipConfig.on(project).isSnapshot() ? 'ls -td -- */ | head -1' : 'ls -td -- */'
+        def execOps = project.objects.newInstance(eclipsebuild.UpdateSitePlugin.InjectedExecOps).execOps
         ssh.run {
             session(remotes.eclipseDotOrg) {
                 // create the leaf directory if not exist
@@ -146,12 +147,12 @@ $remoteDirsXml
 metadata.repository.factory.order=compositeContent.xml,\\!
 artifact.repository.factory.order=compositeArtifacts.xml,\\!
 """
-            project.exec {
+            execOps.exec {
                 workingDir "$buildDir/composite-repository"
                 commandLine "${System.getProperty('java.home')}/bin/jar", 'cvMf', 'compositeArtifacts.jar', 'compositeArtifacts.xml'
             }
 
-            project.exec {
+            execOps.exec {
                 workingDir "$buildDir/composite-repository"
                 commandLine "${System.getProperty('java.home')}/bin/jar", 'cvMf', 'compositeContent.jar', 'compositeContent.xml'
             }
