@@ -19,6 +19,7 @@ import org.gradle.tooling.events.problems.FileLocation;
 import org.gradle.tooling.events.problems.LineInFileLocation;
 import org.gradle.tooling.events.problems.Location;
 import org.gradle.tooling.events.problems.OffsetInFileLocation;
+import org.gradle.tooling.events.problems.Problem;
 import org.gradle.tooling.events.problems.ProblemAggregation;
 import org.gradle.tooling.events.problems.ProblemAggregationEvent;
 import org.gradle.tooling.events.problems.ProblemContext;
@@ -27,6 +28,7 @@ import org.gradle.tooling.events.problems.ProblemEvent;
 import org.gradle.tooling.events.problems.SingleProblemEvent;
 
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IMarker;
@@ -66,16 +68,21 @@ public class ProblemsReportingProgressListener implements ProgressListener {
     }
 
     private void reportProblem(SingleProblemEvent event) {
-        List<Location> locations = event.getLocations();
+        Problem problem = event.getProblem();
+        List<Location> locations = locationsByPriority(problem.getOriginLocations(), problem.getContextualLocations());
         GradleErrorMarker.createProblemMarker(
-            toMarkerSeverity(event.getDefinition().getSeverity()),
+            toMarkerSeverity(problem.getDefinition().getSeverity()),
             findMarkerResource(locations),
             this.gradleBuild,
             markerMessage(event),
-            stacktraceStringFor(event.getFailure().getFailure()),
+            stacktraceStringFor(problem.getFailure()),
             markerPositionConfiguration(locations),
             ProblemEventAdapter.adapterFor(event)
         );
+    }
+
+    private static List<Location> locationsByPriority(List<Location> originLocations, List<Location> contextualLocations) {
+        return ImmutableList.<Location>builder().addAll(originLocations).addAll(contextualLocations).build();
     }
 
     private void reportProblem(ProblemAggregationEvent event) {
@@ -83,13 +90,13 @@ public class ProblemsReportingProgressListener implements ProgressListener {
         ProblemDefinition definition = aggregation.getDefinition();
         List<ProblemContext> contexts = aggregation.getProblemContext();
         for (ProblemContext context : contexts) {
-            List<Location> locations = context.getLocations();
+            List<Location> locations = locationsByPriority(context.getOriginLocations(), context.getContextualLocations());
             GradleErrorMarker.createProblemMarker(
                 toMarkerSeverity(definition.getSeverity()),
                 findMarkerResource(locations),
                 this.gradleBuild,
-                markerMessage(context.getDetails().getDetails(), context.getDetails().getDetails(), definition.getId().getDisplayName()),
-                stacktraceStringFor(context.getFailure().getFailure()),
+                markerMessage(ProblemEventAdapter.textOf(context.getDetails()), ProblemEventAdapter.textOf(context.getDetails()), definition.getId().getDisplayName()),
+                stacktraceStringFor(context.getFailure()),
                 markerPositionConfiguration(locations),
                 ProblemEventAdapter.adapterFor(definition, context)
             );
@@ -142,10 +149,11 @@ public class ProblemsReportingProgressListener implements ProgressListener {
          return notUsed -> {};
     }
 
-    private static String markerMessage(SingleProblemEvent problem) {
-        String result = problem.getContextualLabel().getContextualLabel();
+    private static String markerMessage(SingleProblemEvent event) {
+        Problem problem = event.getProblem();
+        String result = ProblemEventAdapter.textOf(problem.getContextualLabel());
         if (result == null) {
-            result = problem.getDetails().getDetails();
+            result = ProblemEventAdapter.textOf(problem.getDetails());
         }
         if (result == null) {
             result = problem.getDefinition().getId().getDisplayName();
