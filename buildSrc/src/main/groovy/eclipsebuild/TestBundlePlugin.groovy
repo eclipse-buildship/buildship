@@ -137,6 +137,11 @@ class TestBundlePlugin implements Plugin<Project> {
             outputs.dir testDistributionDir
             outputs.dir additionalPluginsDir
 
+            // The test run writes into the declared output, so snapshotting it races with files like
+            // configuration/org.eclipse.core.runtime/.manager/.fileTable*.tmp. The results and reports
+            // are not declared outputs either, so up-to-date checks would skip reruns.
+            doNotTrackState("The test Eclipse installation is mutated by the test run itself")
+
             // the input for the task 'eclipseTest' is the output jars from the dependent projects
             // consequently we have to set it after the project is evaluated
 //            project.afterEvaluate {
