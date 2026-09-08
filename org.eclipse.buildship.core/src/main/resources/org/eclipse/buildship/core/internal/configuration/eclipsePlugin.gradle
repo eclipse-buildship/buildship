@@ -7,8 +7,14 @@
  *
  * SPDX-License-Identifier: EPL-2.0
  ******************************************************************************/
-initscript {
-    allprojects {
-        apply plugin: "eclipse"
+import org.gradle.util.GradleVersion
+
+if (GradleVersion.current() >= GradleVersion.version("8.8")) {
+    gradle.lifecycle.beforeProject { project ->
+        project.apply plugin: "eclipse"
+    }
+} else {
+    gradle.allprojects { project ->
+        project.apply plugin: "eclipse"
     }
 }
