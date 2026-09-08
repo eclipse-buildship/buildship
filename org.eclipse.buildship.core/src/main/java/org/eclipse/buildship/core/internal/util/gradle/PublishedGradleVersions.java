@@ -11,7 +11,6 @@ package org.eclipse.buildship.core.internal.util.gradle;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -20,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import org.gradle.api.UncheckedIOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

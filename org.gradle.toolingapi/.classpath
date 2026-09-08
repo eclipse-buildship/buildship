@@ -2,5 +2,5 @@
 <classpath>
 	<classpathentry kind="output" path="bin/default"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-11/"/>
-	<classpathentry sourcepath="org.gradle.toolingapi.source_9.7.1.jar" kind="lib" path="org.gradle.toolingapi_9.7.1.jar" exported="true"/>
+	<classpathentry sourcepath="org.gradle.toolingapi.source_8.9.0.jar" kind="lib" path="org.gradle.toolingapi_8.9.0.jar" exported="true"/>
 </classpath>

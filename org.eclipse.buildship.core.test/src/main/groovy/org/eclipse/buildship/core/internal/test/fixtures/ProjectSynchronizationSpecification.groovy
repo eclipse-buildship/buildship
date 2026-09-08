@@ -25,16 +25,11 @@ import org.eclipse.buildship.core.GradleCore
 import org.eclipse.buildship.core.GradleDistribution
 import org.eclipse.buildship.core.SynchronizationResult
 import org.eclipse.buildship.core.internal.CorePlugin
-import org.eclipse.buildship.core.internal.util.gradle.GradleVersion
 
 
 abstract class ProjectSynchronizationSpecification extends WorkspaceSpecification {
 
     protected static final GradleDistribution DEFAULT_DISTRIBUTION = GradleDistribution.fromBuild()
-
-    static boolean toleratesMissingProjectDirectories() {
-        GradleVersion.current().baseVersion < GradleVersion.version('9.0')
-    }
 
     protected SynchronizationResult trySynchronizeAndWait(File location) {
         Optional<IProject> project = CorePlugin.workspaceOperations().findProjectByLocation(location.canonicalFile)

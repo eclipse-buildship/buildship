@@ -169,12 +169,6 @@ public class CachingBuildActionExecuter<T> implements BuildActionExecuter<T> {
     }
 
     @Override
-    public CachingBuildActionExecuter<T> withDetailedFailure() {
-        this.delegate.withDetailedFailure();
-        return this;
-    }
-
-    @Override
     public CachingBuildActionExecuter<T> withCancellationToken(CancellationToken cancellationToken) {
         this.delegate.withCancellationToken(cancellationToken);
         return this;

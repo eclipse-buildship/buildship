@@ -169,12 +169,6 @@ final class CachingModelBuilder<T> implements ModelBuilder<T> {
     }
 
     @Override
-    public CachingModelBuilder<T> withDetailedFailure() {
-        this.delegate.withDetailedFailure();
-        return this;
-    }
-
-    @Override
     public CachingModelBuilder<T> withCancellationToken(CancellationToken cancellationToken) {
         this.delegate.withCancellationToken(cancellationToken);
         return this;

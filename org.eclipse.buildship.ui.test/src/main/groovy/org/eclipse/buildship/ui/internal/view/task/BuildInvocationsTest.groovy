@@ -195,7 +195,6 @@ class BuildInvocationsTest extends ProjectSynchronizationSpecification {
              "javaToolchains",
              "provisionGradleEnterpriseAccessKey",
              "resolvableConfigurations",
-             "artifactTransforms",
              "updateDaemonJvm"
          ]
     }
