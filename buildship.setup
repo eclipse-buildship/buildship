@@ -20,6 +20,9 @@
     <requirement
         name="org.codehaus.groovy.eclipse.feature.feature.group"/>
     <requirement
+        name="org.codehaus.groovy30.feature.feature.group"
+        description="Groovy-Eclipse bundles one compiler per Groovy version and org.codehaus.groovy.eclipse.feature only pulls in the newest, which is Groovy 5 in 6.2.0. The Groovy sources here are compiled against groovyLibVersion from gradle.properties, currently 3.0.19, so the Groovy 3 compiler has to be installed as well. Without it the compiler resolver cannot honour groovy.compiler.level and reports an incompatible compiler error on every Groovy project."/>
+    <requirement
         name="org.eclipse.emf.ecoretools.design.feature.group"/>
     <repository
         url="https://groovy.jfrog.io/artifactory/plugins-release/org/codehaus/groovy/groovy-eclipse-integration/6.2.0/e4.40"/>
@@ -127,7 +130,7 @@
         id="buildship.preferences.compiler.goovycompilerlevel"
         key="instance/org.codehaus.groovy.eclipse.compilerResolver/groovy.compiler.level"
         value="30">
-      <description>Align workspace Groovy compiler level to referenced libs</description>
+      <description>Align workspace Groovy compiler level to referenced libs. Selects among the installed Groovy compilers, so it has to stay in sync with the org.codehaus.groovy&lt;level&gt; feature requirement above.</description>
     </setupTask>
     <setupTask
         xsi:type="setup:PreferenceTask"
