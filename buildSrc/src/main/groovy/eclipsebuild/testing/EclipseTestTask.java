@@ -17,6 +17,7 @@ import org.gradle.api.file.FileVisitDetails;
 import org.gradle.api.logging.LogLevel;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
+import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.tasks.JavaExec;
 import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.TaskAction;
@@ -36,11 +37,16 @@ public abstract class EclipseTestTask extends JavaExec {
 
     private static final Logger LOGGER = Logging.getLogger(EclipseTestTask.class);
 
+    private static final String BINARY_RESULTS_DIR_NAME = "binary";
+
     @Inject
     protected abstract TestEventReporterFactory getTestEventReporterFactory();
 
     @Inject
     protected abstract ExecFactory getExecFactory();
+
+    @Inject
+    protected abstract ObjectFactory getObjectFactory();
 
     @OutputDirectory
     public abstract DirectoryProperty getTestEclipseDirectory();
@@ -192,16 +198,26 @@ public abstract class EclipseTestTask extends JavaExec {
         remoteTestRunnerClient.startListening(new ITestRunListener2[] { pdeTestListener }, pdeTestPort);
         LOGGER.info("Listening on port {} for Eclipse Integration Test results in project {}...", pdeTestPort, getProject().getName());
 
+        Directory testResultsDir = cleanDirectory("test-results/" + getName());
+        Directory binaryResultsDir = testResultsDir.dir(BINARY_RESULTS_DIR_NAME);
         EclipseTestAdapter eclipseTestAdapter = new EclipseTestAdapter(
                 pdeTestListener,
                 getTestEventReporterFactory().createTestEventReporter(
                     "Eclipse Integration Test",
-                        cleanDirectory("test-results/" + getName()),
+                        binaryResultsDir,
                         cleanDirectory("reports/tests/" + getName())
                 )
         );
 
-        if(!eclipseTestAdapter.processEvents()) {
+        boolean success;
+        try {
+            success = eclipseTestAdapter.processEvents();
+        } finally {
+            JUnitXmlReport.generate(getObjectFactory(), binaryResultsDir, testResultsDir);
+            LOGGER.info("JUnit XML test results written to {}", testResultsDir);
+        }
+
+        if (!success) {
             throw new GradleException("Test execution failed");
         }
 
