@@ -286,14 +286,22 @@ String getVersionQualifier() {
     String suffix = getVersionSuffix(config)
 
     // use full timestamp on CI vs. date-only for local builds
-    if (project.hasProperty('qualifier')) {
-        'v' + project.getProperty('qualifier')
-    } else if (project.hasProperty('build.invoker') && project.property('build.invoker') == 'ci') {
-        // note that for Eclipse plugin versions, the '-' and '.' character are invalid in front of the build id
-        'v' + new Date().format('yyyyMMdd-kkmm', TimeZone.getTimeZone('GMT')) + suffix
-    } else {
-        'v' + new Date().format('yyyyMMdd', TimeZone.getTimeZone('GMT')) + suffix
+    // note that for Eclipse plugin versions, the '-' and '.' character are invalid in front of the build id
+    boolean invokedByCi = project.hasProperty('build.invoker') && project.property('build.invoker') == 'ci'
+    String pattern = invokedByCi ? 'yyyyMMdd-HHmm' : 'yyyyMMdd'
+
+    'v' + resolveBuildTimestamp().format(pattern, TimeZone.getTimeZone('GMT')) + suffix
+}
+
+private Date resolveBuildTimestamp() {
+    if (!project.hasProperty('buildTimestamp')) {
+        return new Date()
     }
+    String seconds = project.getProperty('buildTimestamp').toString().trim()
+    if (!seconds.isLong()) {
+        throw new IllegalArgumentException("Invalid buildTimestamp '$seconds': expected the number of seconds since the epoch.")
+    }
+    new Date(seconds.toLong() * 1000)
 }
 
 private getVersionSuffix(BuildshipConfig config) {
