@@ -40,7 +40,6 @@ import org.eclipse.buildship.core.internal.GradlePluginsRuntimeException;
 import org.eclipse.buildship.core.internal.workspace.FetchStrategy;
 import org.eclipse.buildship.core.internal.workspace.SynchronizationJob;
 import org.eclipse.buildship.ui.internal.UiPluginConstants;
-import org.eclipse.buildship.ui.internal.util.layout.LayoutUtils;
 import org.eclipse.buildship.ui.internal.util.nodeselection.NodeSelection;
 import org.eclipse.buildship.ui.internal.util.nodeselection.NodeSelectionProvider;
 import org.eclipse.buildship.ui.internal.util.nodeselection.SelectionHistoryManager;
@@ -112,7 +111,7 @@ public final class TaskView extends ViewPart implements NodeSelectionProvider {
         treeViewerNameColumn.setLabelProvider(new DelegatingStyledCellLabelProvider(new TaskNameLabelProvider()));
         final TreeColumn taskNameColumn = treeViewerNameColumn.getColumn();
         taskNameColumn.setText(TaskViewMessages.Tree_Column_Name_Text);
-        taskNameColumn.setWidth(LayoutUtils.ensureMinimumColumnWidth(this.state.getHeaderNameColumnWidth()));
+        taskNameColumn.setWidth(this.state.getHeaderNameColumnWidth());
 
         TreeViewerColumn treeViewerDescriptionColumn = new TreeViewerColumn(this.treeViewer, SWT.LEFT);
         treeViewerDescriptionColumn.setLabelProvider(new TaskDescriptionLabelProvider());
