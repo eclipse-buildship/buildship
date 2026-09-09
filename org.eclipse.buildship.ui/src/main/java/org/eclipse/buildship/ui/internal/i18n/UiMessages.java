@@ -23,6 +23,7 @@ public final class UiMessages extends NLS {
 
     public static String Button_Label_Browse;
 
+    public static String Action_FilterFailedTasks_Tooltip;
     public static String Action_ExpandNodes_Tooltip;
     public static String Action_CollapseNodes_Tooltip;
     public static String Action_ShowFilter_Tooltip;
