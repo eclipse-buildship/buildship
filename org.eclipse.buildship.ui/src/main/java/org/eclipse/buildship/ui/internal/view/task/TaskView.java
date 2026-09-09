@@ -117,7 +117,7 @@ public final class TaskView extends ViewPart implements NodeSelectionProvider {
         treeViewerDescriptionColumn.setLabelProvider(new TaskDescriptionLabelProvider());
         final TreeColumn taskDescriptionColumn = treeViewerDescriptionColumn.getColumn();
         taskDescriptionColumn.setText(TaskViewMessages.Tree_Column_Description_Text);
-        taskDescriptionColumn.setWidth(LayoutUtils.ensureMinimumColumnWidth(this.state.getHeaderDescriptionColumnWidth()));
+        taskDescriptionColumn.setWidth(this.state.getHeaderDescriptionColumnWidth());
 
         // open the import wizard if the empty input page link is selected
         this.emptyInputPage.addSelectionListener(new SelectionAdapter() {
