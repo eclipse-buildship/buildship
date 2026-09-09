@@ -37,8 +37,8 @@ public final class ExecutionViewState {
     public void save() {
         IEclipsePreferences prefs = EclipsePreferencesUtils.getInstanceScope().getNode(UiPlugin.PLUGIN_ID);
         // minimum width is 1, so that the columns are resizeable by the user
-       prefs.putInt(PREF_HEADER_NAME_COLUMN_WIDTH, Math.max(1, this.headerNameColumnWidth));
-       prefs.putInt(PREF_HEADER_DURATION_COLUMN_WIDTH, Math.max(1, this.headerDurationColumnWidth));
+        prefs.putInt(PREF_HEADER_NAME_COLUMN_WIDTH, Math.max(1, this.headerNameColumnWidth));
+        prefs.putInt(PREF_HEADER_DURATION_COLUMN_WIDTH, Math.max(1, this.headerDurationColumnWidth));
 
         try {
             prefs.flush();
