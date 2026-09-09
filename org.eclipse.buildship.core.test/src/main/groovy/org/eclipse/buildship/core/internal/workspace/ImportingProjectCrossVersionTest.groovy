@@ -15,6 +15,8 @@ import spock.lang.Ignore
 import spock.lang.IgnoreIf
 import spock.lang.Unroll
 
+import org.eclipse.core.runtime.IStatus
+
 import org.eclipse.buildship.core.GradleDistribution
 import org.eclipse.buildship.core.internal.CompatibilityChecker
 import org.eclipse.buildship.core.internal.operation.ToolingApiStatus
@@ -136,16 +138,33 @@ class ImportingProjectCrossVersionTest extends ProjectSynchronizationSpecificati
 
         then:
         if (importResult.status.isOK()) {
-            Assertions.assertEquals(allProjects().size(), 1)
-            Assertions.assertEquals(numOfGradleErrorMarkers, 0)
-            Assertions.assertEquals(getPlatformLogErrors().size(), 0)
+            Assertions.assertEquals(1, allProjects().size())
+            Assertions.assertEquals(0, numOfGradleErrorMarkers)
+            Assertions.assertEquals(0, getPlatformLogErrors().size())
         } else {
-            Assertions.assertTrue(importResult.status instanceof ToolingApiStatus)
-            Assertions.assertEquals(importResult.status.getCode(), ToolingApiStatus.ToolingApiStatusType.INCOMPATIBILITY_JAVA.ordinal())
+            Assertions.assertTrue(importResult.status instanceof ToolingApiStatus, describeStatus(distribution, importResult.status))
+            if (distributionUnavailable(importResult.status)) {
+                println "Cannot verify the Java compatibility check for ${distribution.displayName}: the Gradle distribution could not be obtained (${importResult.status.message})"
+            } else {
+                Assertions.assertEquals(ToolingApiStatus.ToolingApiStatusType.INCOMPATIBILITY_JAVA.ordinal(), importResult.status.getCode(), describeStatus(distribution, importResult.status))
+            }
         }
 
         where:
         distribution << getSupportedGradleDistributions('>=3.0', true)
+    }
+
+    def "An unobtainable Gradle distribution is reported as a connection failure"() {
+        setup:
+        GradleDistribution missing = GradleDistribution.forRemoteDistribution(new File(testDir, 'no-such-distribution.zip').toURI())
+
+        when:
+        def importResult = tryImportAndWait(simpleProjectDir, missing)
+
+        then:
+        importResult.status instanceof ToolingApiStatus
+        importResult.status.getCode() == ToolingApiStatus.ToolingApiStatusType.CONNECTION_FAILED.ordinal()
+        distributionUnavailable(importResult.status)
     }
 
     @Unroll
@@ -311,5 +330,33 @@ class ImportingProjectCrossVersionTest extends ProjectSynchronizationSpecificati
 
         where:
         distribution << getSupportedGradleDistributions('<3.3 >=3.1')
+    }
+
+    /**
+     * Whether the status was caused by a Gradle distribution that could not be downloaded or
+     * unpacked. The Tooling API reports that as an ordinary connection failure, so the status code
+     * alone cannot tell it apart from a genuinely misclassified error.
+     */
+    private static boolean distributionUnavailable(IStatus status) {
+        if (status.getCode() != ToolingApiStatus.ToolingApiStatusType.CONNECTION_FAILED.ordinal()) {
+            return false
+        }
+        Set<Throwable> seen = new HashSet<>()
+        Throwable current = status.exception
+        while (current != null && seen.add(current)) {
+            String message = current.message
+            if (message != null && (message.contains('Could not install Gradle distribution from')
+                    || message.contains('The specified Gradle distribution'))) {
+                return true
+            }
+            current = current.cause
+        }
+        return false
+    }
+
+    private static String describeStatus(GradleDistribution distribution, IStatus status) {
+        StringWriter stacktrace = new StringWriter()
+        status.exception?.printStackTrace(new PrintWriter(stacktrace))
+        "import with ${distribution.displayName} returned code ${status.getCode()}: ${status.message}\n${stacktrace}"
     }
 }
