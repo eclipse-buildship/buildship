@@ -67,6 +67,12 @@ task uploadUpdateSite(dependsOn : createP2Repository) {
 
     onlyIf { !['36', '37'].contains(eclipsebuild.Config.on(project).targetPlatform.eclipseVersion) }
 
+    doFirst {
+        if (project.findProperty('build.invoker') == 'ci' && !project.hasProperty('buildTimestamp')) {
+            throw new GradleException("Refusing to publish without -PbuildTimestamp: the release pipeline must pass the build instant shared by all promotion builds.")
+        }
+    }
+
     doLast {
         // folder structure
         // releases                    (main folder - composite update site if release repository)
