@@ -31,6 +31,7 @@ class ExistingJarBundlePlugin implements Plugin<Project> {
         final Property<String> qualifier
         final Property<String> template
         final Property<String> packageFilter
+        final Property<String> sourceReference
         final ConfigurableFileCollection resources
 
         BundleInfoExtension(Project project) {
@@ -40,6 +41,7 @@ class ExistingJarBundlePlugin implements Plugin<Project> {
             qualifier = project.objects.property(String)
             template = project.objects.property(String)
             packageFilter = project.objects.property(String)
+            sourceReference = project.objects.property(String)
             resources = project.files()
         }
 
@@ -123,7 +125,10 @@ class ExistingJarBundlePlugin implements Plugin<Project> {
             outputDirectory.convention(project.layout.buildDirectory.dir("$BUNDLES_STAGING_FOLDER/plugins"))
             outputSourceDirectory.convention(project.layout.buildDirectory.dir("$BUNDLES_STAGING_FOLDER/plugin-sources"))
             pluginConfiguration.convention(getPluginConfiguration(project))
-            sourceReference.convention(project.provider { PluginUtils.sourceReference(project) })
+            // a bundle that wraps a third-party artifact can point the source reference at that artifact's own
+            // repository, which keeps the generated manifest stable across builds of this repository
+            sourceReference.convention(project.extensions.bundleInfo.sourceReference
+                    .orElse(project.provider { PluginUtils.sourceReference(project) }))
             jarFile.convention(project.tasks.named('jar', Jar).flatMap { it.archiveFile })
             extraResourcesDirectory.convention(project.layout.buildDirectory.dir("tmp/bundle-resources").get().getAsFile().absolutePath )
             getProjectName().convention(project.name)
