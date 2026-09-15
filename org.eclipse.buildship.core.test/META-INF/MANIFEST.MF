@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: Buildship, Eclipse Plug-ins for Gradle - Core Test
 Bundle-SymbolicName: org.eclipse.buildship.core.test;singleton:=true
 Automatic-Module-Name: org.eclipse.buildship.core.test
-Bundle-Version: 3.1.12.qualifier
+Bundle-Version: 3.1.13.qualifier
 Bundle-Vendor: Eclipse Buildship
 Bundle-RequiredExecutionEnvironment: JavaSE-21
 Fragment-Host: org.eclipse.buildship.core
