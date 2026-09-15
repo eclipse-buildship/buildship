@@ -43,22 +43,9 @@ class Config {
                 project.rootProject.eclipseBuild.defaultEclipseVersion
     }
 
-    File getTargetPlatformsDir() {
-        // to avoid configuration timing issues we don't cache the values in fields
-        project.hasProperty('targetPlatformsDir') ?
-                new File(project.property('targetPlatformsDir') as String) :
-                new File(System.getProperty('user.home'), '.tooling/eclipse/targetPlatforms')
-    }
-
     // the hierarchy obtainable with the API below:
     //
-    //   targetPlatformsDir
-    //    |--eclipse-sdk
-    //    |  |--eclipse-sdk.tar.gz
-    //    |  |--eclipse
-    //    |     |--Eclipse.app/Contents/MacOS/eclipse
-    //    |     |--plugins
-    //    |     |--features
+    //   baseDirectory
     //    |--45
     //    |  |--target-platform
     //    |  |--mavenized-target-platform
@@ -76,7 +63,7 @@ class Config {
     }
 
     File getTargetPlatformDir() {
-        new File(targetPlatformsDir, eclipseVersion)
+        new File(baseDirectory.get().asFile, eclipseVersion)
     }
 
     File getNonMavenizedTargetPlatformDir() {

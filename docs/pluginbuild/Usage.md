@@ -55,10 +55,8 @@ like any other dependency. The _groupId_ is always `eclipse`. For example:
 
     api 'eclipse:org.eclipse.jdt.ui:+'
 
-By default, the location of the generated target platform is _~/.tooling/eclipse/targetPlatforms_. The location can be
-customized by specifying the `targetPlatformsDir` Gradle project property:
-
-    gradle installTargetPlatform -PtargetPlatformsDir=/path/to/target/platform
+The generated target platform is stored under the root project's build directory, in
+_build/tooling/&lt;eclipse-version&gt;_. Each checkout therefore keeps its own copy, and `gradle clean` removes it.
 
 
 The `versionMapping` can be used to define exact plugin dependency versions per target platform. A bundle can define a dependency

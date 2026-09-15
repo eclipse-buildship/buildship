@@ -69,8 +69,8 @@ import static eclipsebuild.UnPack.ARTIFACT_TYPE_NAME
  * gradle clean build -Peclipse.version=43
  * </pre>
  * The directory layout where the target platform and it's mavenized counterpart stored is defined
- * in the {@link Config} class. The directory containing the target platforms can be redefined with
- * the {@code -PtargetPlatformsDir=<path>} argument.
+ * in the {@link Config} class. Target platforms live under the root project's build directory, so
+ * {@code gradle clean} removes them and each checkout keeps its own copy.
  * <p/>
  * The {@code versionMapping} can be used to define exact plugin dependency versions per target platform.
  * A bundle can define a dependency through the {@code withEclipseBundle()} method like
@@ -144,8 +144,6 @@ class BuildDefinitionPlugin implements Plugin<Project> {
     static final String TASK_NAME_ASSEMBLE_TARGET_PLATFORM = "assembleTargetPlatform"
     static final String TASK_NAME_ADD_EXISTING_JAR_BUNDLES_TO_TARGET_PLATFORM = "addExistingJarBundlesToTargetPlatform"
     static final String TASK_NAME_INSTALL_TARGET_PLATFORM = "installTargetPlatform"
-    static final String TASK_NAME_UNINSTALL_TARGET_PLATFORM = "uninstallTargetPlatform"
-    static final String TASK_NAME_UNINSTALL_ALL_TARGET_PLATFORMS = "uninstallAllTargetPlatforms"
 
     static final Attribute artifactType = Attribute.of('artifactType', String)
 
@@ -161,8 +159,6 @@ class BuildDefinitionPlugin implements Plugin<Project> {
         addTaskAssembleTargetPlatform(project, config)
         addTaskAddExistingJarsToTargetPlatform(project, config)
         addTaskInstallTargetPlatform(project, config)
-        addTaskUninstallTargetPlatform(project, config)
-        addTaskUninstallAllTargetPlatforms(project, config)
     }
 
     private static createEclipseSdkDependencies(Project project) {
@@ -445,31 +441,4 @@ class BuildDefinitionPlugin implements Plugin<Project> {
         deployer.deploy(config.nonMavenizedTargetPlatformDir, config.mavenizedTargetPlatformDir)
     }
 
-    static void addTaskUninstallTargetPlatform(Project project, Config config) {
-        project.task(TASK_NAME_UNINSTALL_TARGET_PLATFORM) {
-            group = Constants.gradleTaskGroupName
-            description = "Deletes the target platform."
-            doLast { deleteFolder(project, config.targetPlatformDir) }
-        }
-    }
-
-    static void deleteFolder(Project project, File folder) {
-        if (!folder.exists()) {
-            project.logger.info("'$folder' doesn't exist")
-        } else {
-            project.logger.info("Delete '$folder'")
-            def success = folder.deleteDir()
-            if (!success) {
-                throw new RuntimeException("Failed to delete '$folder'")
-            }
-        }
-    }
-
-    static void addTaskUninstallAllTargetPlatforms(Project project, Config config) {
-        project.task(TASK_NAME_UNINSTALL_ALL_TARGET_PLATFORMS) {
-            group = Constants.gradleTaskGroupName
-            description = "Deletes all target platforms from the current machine."
-            doLast { deleteFolder(project, config.targetPlatformsDir) }
-        }
-    }
 }

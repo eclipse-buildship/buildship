@@ -33,18 +33,10 @@ abstract class AssembleTargetPlatformTask extends DefaultTask {
 
     @TaskAction
     void assembleTargetPlatform() {
-        // if multiple builds start on the same machine (which is the case with a CI server)
-        // we want to prevent them assembling the same target platform at the same time
-        def lock = new FileSemaphore(nonMavenizedTargetPlatformDir.get().getAsFile())
-        try {
-            lock.lock()
-            assembleTargetPlatformUnprotected(getProject())
-        } finally {
-            lock.unlock()
-        }
+        doAssembleTargetPlatform(getProject())
     }
 
-    void assembleTargetPlatformUnprotected(Project project) {
+    private void doAssembleTargetPlatform(Project project) {
         // delete the target platform directory to ensure that the P2 Director creates a fresh product
         if (nonMavenizedTargetPlatformDir.get().getAsFile().exists()) {
             getLogger().info("Delete mavenized platform directory '${nonMavenizedTargetPlatformDir.get().getAsFile()}'")
