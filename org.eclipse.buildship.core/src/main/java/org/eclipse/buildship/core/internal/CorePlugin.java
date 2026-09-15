@@ -16,15 +16,21 @@ import java.util.stream.Collectors;
 
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.BundleException;
 import org.osgi.framework.Constants;
+import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.ServiceRegistration;
 import org.osgi.util.tracker.ServiceTracker;
 
 import com.google.common.collect.Maps;
 
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Plugin;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.Job;
 
 import org.eclipse.buildship.core.internal.configuration.BuildConfiguration;
 import org.eclipse.buildship.core.internal.configuration.ConfigurationManager;
@@ -215,6 +221,28 @@ public final class CorePlugin extends Plugin {
     }
 
     private void scheduleSynchronizationForAbsentModels() {
+        // This walks the whole workspace and reads a preference file for every Gradle project.
+        // Doing that on the activation thread keeps the state change lock of this bundle busy for
+        // as long as it takes, and any other thread that loads a class from this bundle meanwhile
+        // has to wait for the lock. See the comment on activate() for why that is a problem.
+        Job job = new Job("Looking for Gradle projects to synchronize") {
+
+            @Override
+            protected IStatus run(IProgressMonitor monitor) {
+                synchronizeProjectsWithAbsentModels();
+                return Status.OK_STATUS;
+            }
+
+            @Override
+            public boolean belongsTo(Object family) {
+                return GRADLE_JOB_FAMILY.equals(family);
+            }
+        };
+        job.setSystem(true);
+        job.schedule();
+    }
+
+    private void synchronizeProjectsWithAbsentModels() {
         Map<BuildConfiguration, IProject> projects = Maps.newHashMap();
         for (IProject p : workspaceOperations().getAllProjects().stream().filter(GradleProjectNature::isPresentOn).collect(Collectors.toList())) {
             ProjectConfiguration config = configurationManager().tryLoadProjectConfiguration(p);
@@ -259,7 +287,38 @@ public final class CorePlugin extends Plugin {
     }
 
     public static CorePlugin getInstance() {
-        return plugin;
+        CorePlugin instance = plugin;
+        return instance != null ? instance : activate();
+    }
+
+    /**
+     * Waits for a pending activation of this bundle and returns the activated plugin instance.
+     * <p/>
+     * This bundle uses the lazy activation policy, so the framework runs the activator when the
+     * first class is loaded from it. When a second thread loads a class while that activation is
+     * still in progress, Equinox waits <code>osgi.module.lock.timeout</code> seconds (30 by
+     * default) for it to finish and then hands out the class anyway, to make sure the two threads
+     * cannot deadlock on each other. The second thread then runs against a plugin whose static
+     * state is still unassigned. Starting the bundle explicitly waits for the pending activation
+     * instead of failing with a {@link NullPointerException}.
+     *
+     * @see <a href="https://github.com/eclipse-buildship/buildship/issues/1379">Issue 1379</a>
+     */
+    private static CorePlugin activate() {
+        Bundle bundle = FrameworkUtil.getBundle(CorePlugin.class);
+        if (bundle != null && bundle.getState() == Bundle.STARTING) {
+            try {
+                bundle.start(Bundle.START_TRANSIENT);
+            } catch (BundleException e) {
+                throw new GradlePluginsRuntimeException("Cannot activate " + PLUGIN_ID, e);
+            }
+        }
+
+        CorePlugin instance = plugin;
+        if (instance == null) {
+            throw new GradlePluginsRuntimeException(PLUGIN_ID + " is not active");
+        }
+        return instance;
     }
 
     public static Logger logger() {
