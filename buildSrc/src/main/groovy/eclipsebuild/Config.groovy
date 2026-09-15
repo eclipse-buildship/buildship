@@ -47,6 +47,7 @@ class Config {
     //
     //   baseDirectory
     //    |--45
+    //    |  |--target-platform-base
     //    |  |--target-platform
     //    |  |--mavenized-target-platform
     //    |     |--version
@@ -66,6 +67,19 @@ class Config {
         new File(baseDirectory.get().asFile, eclipseVersion)
     }
 
+    /**
+     * The Eclipse distribution as the p2 director assembles it from the target definition, with no locally built
+     * bundle installed into it. Only {@code assembleTargetPlatform} writes here, which is what lets that task be
+     * cached.
+     */
+    File getTargetPlatformBaseDir() {
+        new File(targetPlatformDir, 'target-platform-base')
+    }
+
+    /**
+     * The target platform the rest of the build consumes: a copy of {@link #getTargetPlatformBaseDir()} with the
+     * locally built jar bundles installed into it.
+     */
     File getNonMavenizedTargetPlatformDir() {
         new File(targetPlatformDir, 'target-platform')
     }
