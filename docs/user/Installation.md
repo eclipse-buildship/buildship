@@ -36,6 +36,8 @@ This update site is built against the Eclipse version that was current at the ti
 
 Eclipse Version | Type      | Update Site
 --------------- | ----------| ------------
+2026-09         | snapshot  | `https://download.eclipse.org/buildship/updates/e441/snapshots/3.x`
+2026-09         | release   | `https://download.eclipse.org/buildship/updates/e441/releases/3.x`
 2026-06         | snapshot  | `https://download.eclipse.org/buildship/updates/e440/snapshots/3.x`
 2026-06         | release   | `https://download.eclipse.org/buildship/updates/e440/releases/3.x`
 2026-03         | snapshot  | `https://download.eclipse.org/buildship/updates/e439/snapshots/3.x`
