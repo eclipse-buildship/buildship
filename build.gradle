@@ -89,9 +89,6 @@ ext.baseVersion = file('version.txt').text.trim()
 ext.versionQualifier = getVersionQualifier()
 version = baseVersion + '.' + versionQualifier
 
-// ensure that the assembleTargetPlatform is executed when the gradle.properties file is changed
-project.assembleTargetPlatform.inputs.file file('gradle.properties')
-
 subprojects {
     // set the calculated version on all projects in the hierarchy
     version = rootProject.version

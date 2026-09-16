@@ -43,23 +43,11 @@ class Config {
                 project.rootProject.eclipseBuild.defaultEclipseVersion
     }
 
-    File getTargetPlatformsDir() {
-        // to avoid configuration timing issues we don't cache the values in fields
-        project.hasProperty('targetPlatformsDir') ?
-                new File(project.property('targetPlatformsDir') as String) :
-                new File(System.getProperty('user.home'), '.tooling/eclipse/targetPlatforms')
-    }
-
     // the hierarchy obtainable with the API below:
     //
-    //   targetPlatformsDir
-    //    |--eclipse-sdk
-    //    |  |--eclipse-sdk.tar.gz
-    //    |  |--eclipse
-    //    |     |--Eclipse.app/Contents/MacOS/eclipse
-    //    |     |--plugins
-    //    |     |--features
+    //   baseDirectory
     //    |--45
+    //    |  |--target-platform-base
     //    |  |--target-platform
     //    |  |--mavenized-target-platform
     //    |     |--version
@@ -76,9 +64,22 @@ class Config {
     }
 
     File getTargetPlatformDir() {
-        new File(targetPlatformsDir, eclipseVersion)
+        new File(baseDirectory.get().asFile, eclipseVersion)
     }
 
+    /**
+     * The Eclipse distribution as the p2 director assembles it from the target definition, with no locally built
+     * bundle installed into it. Only {@code assembleTargetPlatform} writes here, which is what lets that task be
+     * cached.
+     */
+    File getTargetPlatformBaseDir() {
+        new File(targetPlatformDir, 'target-platform-base')
+    }
+
+    /**
+     * The target platform the rest of the build consumes: a copy of {@link #getTargetPlatformBaseDir()} with the
+     * locally built jar bundles installed into it.
+     */
     File getNonMavenizedTargetPlatformDir() {
         new File(targetPlatformDir, 'target-platform')
     }

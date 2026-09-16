@@ -13,8 +13,6 @@ package eclipsebuild
 
 import groovy.xml.XmlSlurper
 
-import com.google.common.hash.HashFunction
-import com.google.common.hash.Hashing
 import eclipsebuild.jar.ExistingJarBundlePlugin
 import eclipsebuild.mavenize.BundleMavenDeployer
 import org.gradle.api.Plugin
@@ -24,10 +22,10 @@ import org.gradle.api.attributes.Attribute
 import org.gradle.api.file.Directory
 import org.gradle.api.logging.LogLevel
 import org.gradle.api.provider.Provider
+import org.gradle.api.tasks.PathSensitivity
 import org.gradle.process.ExecOperations
 
 import javax.inject.Inject
-import java.nio.charset.StandardCharsets
 
 import static eclipsebuild.Constants.eclipseSdkDownloadClassifier
 import static eclipsebuild.UnPack.ARTIFACT_TYPE_NAME
@@ -69,8 +67,8 @@ import static eclipsebuild.UnPack.ARTIFACT_TYPE_NAME
  * gradle clean build -Peclipse.version=43
  * </pre>
  * The directory layout where the target platform and it's mavenized counterpart stored is defined
- * in the {@link Config} class. The directory containing the target platforms can be redefined with
- * the {@code -PtargetPlatformsDir=<path>} argument.
+ * in the {@link Config} class. Target platforms live under the root project's build directory, so
+ * {@code gradle clean} removes them and each checkout keeps its own copy.
  * <p/>
  * The {@code versionMapping} can be used to define exact plugin dependency versions per target platform.
  * A bundle can define a dependency through the {@code withEclipseBundle()} method like
@@ -144,8 +142,9 @@ class BuildDefinitionPlugin implements Plugin<Project> {
     static final String TASK_NAME_ASSEMBLE_TARGET_PLATFORM = "assembleTargetPlatform"
     static final String TASK_NAME_ADD_EXISTING_JAR_BUNDLES_TO_TARGET_PLATFORM = "addExistingJarBundlesToTargetPlatform"
     static final String TASK_NAME_INSTALL_TARGET_PLATFORM = "installTargetPlatform"
-    static final String TASK_NAME_UNINSTALL_TARGET_PLATFORM = "uninstallTargetPlatform"
-    static final String TASK_NAME_UNINSTALL_ALL_TARGET_PLATFORMS = "uninstallAllTargetPlatforms"
+
+    // the Eclipse SDK that provides the p2 director used to assemble and modify target platforms
+    static final String ECLIPSE_SDK_VERSION = "4.27"
 
     static final Attribute artifactType = Attribute.of('artifactType', String)
 
@@ -161,8 +160,6 @@ class BuildDefinitionPlugin implements Plugin<Project> {
         addTaskAssembleTargetPlatform(project, config)
         addTaskAddExistingJarsToTargetPlatform(project, config)
         addTaskInstallTargetPlatform(project, config)
-        addTaskUninstallTargetPlatform(project, config)
-        addTaskUninstallAllTargetPlatforms(project, config)
     }
 
     private static createEclipseSdkDependencies(Project project) {
@@ -179,7 +176,7 @@ class BuildDefinitionPlugin implements Plugin<Project> {
             eclipseSdks
         }
         project.dependencies {
-            eclipseSdks(group: 'org.eclipse', name: 'eclipse-sdk', version: '4.27') {
+            eclipseSdks(group: 'org.eclipse', name: 'eclipse-sdk', version: ECLIPSE_SDK_VERSION) {
                 artifact {
                     type = Constants.type
                     classifier = eclipseSdkDownloadClassifier
@@ -291,42 +288,26 @@ class BuildDefinitionPlugin implements Plugin<Project> {
 
             project.afterEvaluate {
                 getTargetPlatformFile().set(config.targetPlatform.targetDefinition as File)
-                getNonMavenizedTargetPlatformDir().set(config.nonMavenizedTargetPlatformDir)
+                getTargetPlatformBaseDir().set(config.targetPlatformBaseDir)
             }
 
+            eclipseSdkVersion.convention(ECLIPSE_SDK_VERSION)
+            eclipseSdkClassifier.convention(eclipseSdkDownloadClassifier)
+            os.convention(Constants.os)
+            ws.convention(Constants.ws)
+            arch.convention(Constants.arch)
             eclipseSdkExe.convention(project.provider { Config.on(project).eclipseSdkExe.path })
             repositoryMirrorUrls.convention(project.hasProperty('repository.mirrors') ? project.property('repository.mirrors') as String : null)
-
-            onlyIf {
-                String hash = targetPlatformHash(project, config.targetPlatform.targetDefinition.text)
-                File digestFile = new File(config.nonMavenizedTargetPlatformDir, 'digest')
-
-                if (!digestFile.exists()) {
-                    project.logger.info("No digest file found in '${config.nonMavenizedTargetPlatformDir}'; reassemble the target platform.")
-                    return true
-                } else {
-                    boolean digestMatch = digestFile.text == hash
-                    if (!digestMatch) {
-                        project.logger.info("Target definition file or the manifest file of an existing jur bundle plugin has changed; reassemble the target platform.")
-                    }
-                    return !digestMatch
-                }
-            }
+            projectLocation.convention(project.projectDir.absolutePath)
         }
     }
 
-    static String targetPlatformHash(Project project, String targetDefinitionText) {
-        HashFunction sha512HashFunction = Hashing.sha512()
-        String manifests = project.rootProject.allprojects
-                .findAll { p -> p.plugins.hasPlugin(ExistingJarBundlePlugin) }
-                .toSorted { p1, p2 -> p1.name <=> p2.name }
-                .collect { p -> p.file("META-INF/MANIFEST.MF").exists() ? p.file("META-INF/MANIFEST.MF").text : null }
-                .findAll { it != null }
-                .join("\n")
-        String hashInput = manifests + "\n" + targetDefinitionText
-        return sha512HashFunction.hashString(hashInput, StandardCharsets.UTF_8)
-    }
-
+    /**
+     * Copies the assembled distribution and installs the locally built jar bundles into the copy.
+     * <p/>
+     * Working on a copy is what keeps {@code assembleTargetPlatform} cacheable. Its output has to stay exactly as the
+     * p2 director produced it, and these bundles are rebuilt whenever the wrapped library changes.
+     */
     static void addTaskAddExistingJarsToTargetPlatform(Project project, Config config) {
         project.task(TASK_NAME_ADD_EXISTING_JAR_BUNDLES_TO_TARGET_PLATFORM, dependsOn: [
                 TASK_NAME_ASSEMBLE_TARGET_PLATFORM,
@@ -334,31 +315,53 @@ class BuildDefinitionPlugin implements Plugin<Project> {
             group = Constants.gradleTaskGroupName
             description = "Adds local jar bundle plugins to the assembled target platform"
 
-
             // install existing jar bundles
             project.rootProject.allprojects.each { Project p ->
                 p.afterEvaluate {
                     if (p.plugins.hasPlugin(ExistingJarBundlePlugin)) {
                         dependsOn p.tasks[ExistingJarBundlePlugin.TASK_NAME_CREATE_P2_REPOSITORY]
+                        inputs.dir(new File(p.buildDir, ExistingJarBundlePlugin.P2_REPOSITORY_FOLDER))
+                                .withPropertyName("${p.name}P2Repository")
+                                .withPathSensitivity(PathSensitivity.RELATIVE)
                     }
                 }
+            }
+
+            project.afterEvaluate {
+                inputs.dir(config.targetPlatformBaseDir).withPropertyName('targetPlatformBase')
+                outputs.dir(config.nonMavenizedTargetPlatformDir).withPropertyName('targetPlatform')
             }
 
             doLast {
                 def execOps = project.objects.newInstance(InjectedExecOps)
+                copyAssembledTargetPlatform(project, config)
                 addExistingJarsToTargetPlatform(project, config, execOps)
             }
+        }
+    }
 
-            onlyIf {
-                Task t = project.tasks[TASK_NAME_ASSEMBLE_TARGET_PLATFORM]
-                boolean didWork = t.state.didWork
-                project.rootProject.allprojects.each { Project p ->
-                    if (p.plugins.hasPlugin(ExistingJarBundlePlugin)) {
-                        didWork = didWork || p.tasks[ExistingJarBundlePlugin.TASK_NAME_CREATE_P2_REPOSITORY].state.didWork
-                    }
-                }
-                didWork
-            }
+    static void copyAssembledTargetPlatform(Project project, Config config) {
+        project.logger.info("Copy the assembled target platform '${config.targetPlatformBaseDir}' to '${config.nonMavenizedTargetPlatformDir}'")
+        project.sync {
+            from config.targetPlatformBaseDir
+            into config.nonMavenizedTargetPlatformDir
+        }
+        retargetEclipseIni(config)
+    }
+
+    /**
+     * Points the copied distribution's launcher configuration at the copy rather than at the assembled original.
+     * <p/>
+     * The p2 director writes the launcher paths in eclipse.ini relative to the install directory, so a plain copy
+     * still refers to the directory it was assembled in. The p2 director refuses to install into such a copy, failing
+     * with "Error while loading manipulator".
+     */
+    static void retargetEclipseIni(Config config) {
+        File eclipseIni = new File(config.nonMavenizedTargetPlatformDir, 'eclipse.ini')
+        if (eclipseIni.exists()) {
+            eclipseIni.text = eclipseIni.text.replace(
+                    "../${config.targetPlatformBaseDir.name}/",
+                    "../${config.nonMavenizedTargetPlatformDir.name}/")
         }
     }
 
@@ -445,31 +448,4 @@ class BuildDefinitionPlugin implements Plugin<Project> {
         deployer.deploy(config.nonMavenizedTargetPlatformDir, config.mavenizedTargetPlatformDir)
     }
 
-    static void addTaskUninstallTargetPlatform(Project project, Config config) {
-        project.task(TASK_NAME_UNINSTALL_TARGET_PLATFORM) {
-            group = Constants.gradleTaskGroupName
-            description = "Deletes the target platform."
-            doLast { deleteFolder(project, config.targetPlatformDir) }
-        }
-    }
-
-    static void deleteFolder(Project project, File folder) {
-        if (!folder.exists()) {
-            project.logger.info("'$folder' doesn't exist")
-        } else {
-            project.logger.info("Delete '$folder'")
-            def success = folder.deleteDir()
-            if (!success) {
-                throw new RuntimeException("Failed to delete '$folder'")
-            }
-        }
-    }
-
-    static void addTaskUninstallAllTargetPlatforms(Project project, Config config) {
-        project.task(TASK_NAME_UNINSTALL_ALL_TARGET_PLATFORMS) {
-            group = Constants.gradleTaskGroupName
-            description = "Deletes all target platforms from the current machine."
-            doLast { deleteFolder(project, config.targetPlatformsDir) }
-        }
-    }
 }

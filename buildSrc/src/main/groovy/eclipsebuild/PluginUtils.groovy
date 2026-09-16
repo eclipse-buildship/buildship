@@ -95,15 +95,30 @@ class PluginUtils {
     }
 
     /**
-     * Calculates the value for the Eclipse-SourceReferences manifest attribute.
+     * Calculates the value for the Eclipse-SourceReferences manifest attribute, pinned to the current commit.
      *
      * @param project the project containing the bundle manifest
      * @return the source reference falue
      */
     static String sourceReference(Project project) {
+        sourceReference(project, project.rootProject.eclipseBuild.commitId)
+    }
+
+    /**
+     * Calculates the value for the Eclipse-SourceReferences manifest attribute.
+     * <p/>
+     * Passing no commit id yields a reference that names the repository and the path but pins no revision. That keeps
+     * the generated manifest identical across builds, which matters for a bundle whose jar feeds the target platform.
+     * A build that publishes the bundle should pass the commit id, so the published artifact says exactly which
+     * revision it came from.
+     *
+     * @param project the project containing the bundle manifest
+     * @param commitId the revision to pin the reference to, or null to leave it unpinned
+     * @return the source reference falue
+     */
+    static String sourceReference(Project project, def commitId) {
         def scmRepo =  project.rootProject.eclipseBuild.scmRepo
         if (scmRepo) {
-            def commitId = project.rootProject.eclipseBuild.commitId
             def rootPath = Paths.get(project.rootProject.projectDir.canonicalPath)
             def projectPath = Paths.get(project.projectDir.canonicalPath)
             def relativePath = rootPath.relativize(projectPath)

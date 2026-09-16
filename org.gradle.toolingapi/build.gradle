@@ -10,10 +10,32 @@ dependencies {
     }
 }
 
+// This bundle repackages a published Gradle release, so its qualifier identifies that release rather than the
+// Buildship build that repackaged it. The value comes from the build receipt inside the Tooling API jar, which makes
+// the bundle version depend on nothing but the Tooling API version. A wall-clock qualifier would give identical
+// content a new version on every build, which in turn forces the target platform to reinstall the bundle every time.
+def toolingApiBuildReceipt = providers.provider {
+    eclipsebuild.jar.JarBundleUtils.gradleBuildReceipt(
+            eclipsebuild.jar.JarBundleUtils.firstDependencyJar(configurations.plugin))
+}
+
+// Eclipse-SourceReferences records the revision a published artifact was built from, so only a build that publishes
+// needs the commit id. Pinning it everywhere would put the current commit into the bundle and change the jar on every
+// commit, which forces the target platform to reinstall it again. Other builds get the same reference unpinned.
+def sourceReferenceForThisBuild = providers.provider {
+    def commitId = gradle.taskGraph.hasTask(':org.eclipse.buildship.site:uploadUpdateSite')
+            ? rootProject.eclipseBuild.commitId
+            : null
+    eclipsebuild.PluginUtils.sourceReference(project, commitId)
+}
+
 bundleInfo {
     bundleName = 'org.gradle.toolingapi'
     bundleVersion = getBundleVersion(toolingApiVersion)
-    qualifier = versionQualifier
+    qualifier.set(toolingApiBuildReceipt.map { receipt ->
+        eclipsebuild.jar.JarBundleUtils.versionQualifierFor(receipt.getProperty('buildTimestamp'))
+    })
+    sourceReference.set(sourceReferenceForThisBuild)
     template = file('resources/template/manifest-template.txt').text
     packageFilter = ".c*jarjar.*|.*impldep.*|.*internal.*|org.gradle(|.concurrent.*|.groovy.*|.initialization.*|.api.+|.wrapper|.util)"
     resources = files('resources/extra_resources')

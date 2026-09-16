@@ -8,9 +8,57 @@ import org.gradle.api.artifacts.ResolvedDependency
 
 import java.util.regex.Pattern
 import java.util.zip.ZipEntry
+import java.util.zip.ZipFile
 import java.util.zip.ZipInputStream
 
 class JarBundleUtils {
+
+    private static final String GRADLE_BUILD_RECEIPT = 'org/gradle/build-receipt.properties'
+
+    /**
+     * Reads the build receipt embedded in a jar published from the gradle/gradle repository.
+     * <p/>
+     * The receipt records the version, the commit and the instant that version was built, for example
+     * <pre>
+     * baseVersion=8.9
+     * buildTimestamp=20240711143741+0000
+     * commitId=d536ef36a19186ccc596d8817123e5445f30fef8
+     * </pre>
+     * Bundle metadata derived from the receipt describes the wrapped Gradle release instead of the build that
+     * repackaged it, so the generated bundle stays byte-identical no matter when or where it was built.
+     *
+     * @param jar a jar published from the gradle/gradle repository
+     * @return the parsed build receipt
+     */
+    static Properties gradleBuildReceipt(File jar) {
+        Properties receipt = new Properties()
+        new ZipFile(jar).withCloseable { ZipFile zip ->
+            ZipEntry entry = zip.getEntry(GRADLE_BUILD_RECEIPT)
+            if (entry == null) {
+                throw new IllegalArgumentException("'${jar}' contains no ${GRADLE_BUILD_RECEIPT}, so it was not published from gradle/gradle")
+            }
+            zip.getInputStream(entry).withCloseable { receipt.load(it) }
+        }
+        receipt
+    }
+
+    /**
+     * Converts a Gradle build receipt timestamp into an OSGi version qualifier.
+     * <p/>
+     * For example {@code 20240711143741+0000} becomes {@code v20240711-1437}, which is the qualifier format Eclipse
+     * conventionally uses. The seconds and the UTC offset are dropped because the receipt always records UTC and a
+     * minute is precise enough to identify a release.
+     *
+     * @param buildTimestamp the {@code buildTimestamp} value of a Gradle build receipt
+     * @return the OSGi version qualifier
+     */
+    static String versionQualifierFor(String buildTimestamp) {
+        def matcher = buildTimestamp =~ /^(\d{8})(\d{4})\d{2}[+-]\d{4}$/
+        if (!matcher.matches()) {
+            throw new IllegalArgumentException("Unexpected Gradle build receipt timestamp: '${buildTimestamp}'")
+        }
+        "v${matcher.group(1)}-${matcher.group(2)}"
+    }
 
     static File firstDependencyJar(Configuration configuration) {
         ResolvedArtifact jarArtifact = findJarArtifact(getResolvedDependency(configuration))
