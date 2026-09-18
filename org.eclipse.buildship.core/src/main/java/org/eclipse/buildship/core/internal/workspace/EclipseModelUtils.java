@@ -9,13 +9,25 @@
  ******************************************************************************/
 package org.eclipse.buildship.core.internal.workspace;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.eclipse.buildship.core.internal.CorePlugin;
+import org.eclipse.buildship.core.internal.UnsupportedConfigurationException;
+import org.eclipse.buildship.core.internal.util.gradle.GradleVersion;
+import org.eclipse.buildship.core.internal.util.gradle.IdeFriendlyClassLoading;
+import org.eclipse.buildship.core.internal.util.gradle.SimpleIntermediateResultHandler;
+import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.gradle.tooling.BuildAction;
 import org.gradle.tooling.BuildActionFailureException;
 import org.gradle.tooling.ProjectConnection;
+import org.gradle.tooling.model.GradleProject;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.tooling.model.eclipse.EclipseProject;
 import org.gradle.tooling.model.eclipse.EclipseRuntime;
@@ -25,17 +37,9 @@ import org.gradle.tooling.model.eclipse.RunClosedProjectBuildDependencies;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
-import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.ResourcesPlugin;
-
-import org.eclipse.buildship.core.internal.CorePlugin;
-import org.eclipse.buildship.core.internal.UnsupportedConfigurationException;
-import org.eclipse.buildship.core.internal.util.gradle.GradleVersion;
-import org.eclipse.buildship.core.internal.util.gradle.IdeFriendlyClassLoading;
-import org.eclipse.buildship.core.internal.util.gradle.SimpleIntermediateResultHandler;
-
 public final class EclipseModelUtils {
 
+    private static final String COULD_NOT_CREATE_TASK = "Could not create task ";
     private static final String EXCEPTION_DUPLICATE_ROOT_ELEMENT_TEXT = "Duplicate root element ";
 
     private EclipseModelUtils() {
@@ -97,7 +101,37 @@ public final class EclipseModelUtils {
                 String message = String.format("A project with the name %s already exists.", projectName);
                 throw new UnsupportedConfigurationException(message, e);
             }
+            // https://github.com/eclipse-buildship/buildship/issues/1355
+            if (cause.getMessage() != null && cause.getMessage().startsWith(COULD_NOT_CREATE_TASK)) {
+                GradleProject model = connection.model(GradleProject.class).get();
+                Set<String> tasks = new HashSet<>();
+                collectTasks(model, tasks);
+                List<String> toExclude = Arrays.asList(
+                    "test", "check", "testClasses", "javadoc", "distZip",
+                    "distTar", "shadowJar", "sourcesJar", "assembleDist",
+                    "installDist"
+                );
+                List<String> arguments = new ArrayList<>();
+                for (String task : toExclude) {
+                    if (tasks.contains(task)) {
+                        arguments.add("-x");
+                        arguments.add(task);
+                    }
+                }
+                connection.newBuild()
+                    .forTasks("build")
+                    .withArguments(arguments)
+                    .run();
+                return ImmutableMap.of(":", queryModel(EclipseProject.class, connection));
+            }
             throw e;
+        }
+    }
+
+    private static void collectTasks(GradleProject project, Set<String> tasks) {
+        project.getTasks().forEach(t -> tasks.add(t.getName()));
+        for (GradleProject child : project.getChildren()) {
+            collectTasks(child, tasks);
         }
     }
 
