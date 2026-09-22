@@ -15,6 +15,7 @@ import org.eclipse.buildship.core.internal.CorePlugin;
 import org.eclipse.buildship.core.internal.launch.GradleRunConfigurationAttributes;
 import org.eclipse.buildship.ui.internal.util.action.CommandBackedAction;
 import org.eclipse.buildship.ui.internal.util.nodeselection.NodeSelection;
+import org.eclipse.buildship.ui.internal.util.nodeselection.NodeSelectionProvider;
 import org.eclipse.buildship.ui.internal.util.nodeselection.SelectionSpecificAction;
 
 /**
@@ -24,8 +25,8 @@ import org.eclipse.buildship.ui.internal.util.nodeselection.SelectionSpecificAct
  */
 public final class CreateRunConfigurationAction extends CommandBackedAction implements SelectionSpecificAction {
 
-    public CreateRunConfigurationAction(String commandId) {
-        super(commandId);
+    public CreateRunConfigurationAction(String commandId, NodeSelectionProvider selectionProvider) {
+        super(commandId, selectionProvider);
 
         setText(TaskViewMessages.Action_CreateRunConfiguration_Text);
         setToolTipText(TaskViewMessages.Action_CreateRunConfiguration_Tooltip);

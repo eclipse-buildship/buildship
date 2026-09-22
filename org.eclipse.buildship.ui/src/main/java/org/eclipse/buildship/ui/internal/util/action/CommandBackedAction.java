@@ -19,6 +19,7 @@ import org.eclipse.ui.handlers.IHandlerService;
 
 import org.eclipse.buildship.core.internal.GradlePluginsRuntimeException;
 import org.eclipse.buildship.ui.internal.UiPlugin;
+import org.eclipse.buildship.ui.internal.util.nodeselection.NodeSelectionProvider;
 
 /**
  * Base class for {@link Action} instances that invoke a {@link org.eclipse.core.commands.Command}
@@ -27,20 +28,34 @@ import org.eclipse.buildship.ui.internal.UiPlugin;
 public abstract class CommandBackedAction extends Action {
 
     private final String commandId;
+    private final NodeSelectionProvider selectionProvider;
 
     protected CommandBackedAction(String commandId) {
-        this(commandId, IAction.AS_UNSPECIFIED);
+        this(commandId, IAction.AS_UNSPECIFIED, null);
+    }
+
+    protected CommandBackedAction(String commandId, NodeSelectionProvider selectionProvider) {
+        this(commandId, IAction.AS_UNSPECIFIED, selectionProvider);
     }
 
     protected CommandBackedAction(String commandId, int style) {
+        this(commandId, style, null);
+    }
+
+    private CommandBackedAction(String commandId, int style, NodeSelectionProvider selectionProvider) {
         super(null, style);
         this.commandId = Preconditions.checkNotNull(commandId);
+        this.selectionProvider = selectionProvider;
     }
 
     @Override
     public void runWithEvent(Event event) {
         try {
-            getHandlerService().executeCommand(this.commandId, event);
+            if (this.selectionProvider == null) {
+                getHandlerService().executeCommand(this.commandId, event);
+            } else {
+                CommandUtils.executeCommandForSelection(this.commandId, event, this.selectionProvider.getSelection());
+            }
         } catch (Exception e) {
             String message = String.format("Cannot execute command for action '%s'.", getText());
             UiPlugin.logger().error(message, e);

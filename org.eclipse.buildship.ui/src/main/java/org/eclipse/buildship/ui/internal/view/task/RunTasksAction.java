@@ -13,6 +13,7 @@ import org.eclipse.buildship.ui.internal.PluginImage;
 import org.eclipse.buildship.ui.internal.PluginImages;
 import org.eclipse.buildship.ui.internal.util.action.CommandBackedAction;
 import org.eclipse.buildship.ui.internal.util.nodeselection.NodeSelection;
+import org.eclipse.buildship.ui.internal.util.nodeselection.NodeSelectionProvider;
 import org.eclipse.buildship.ui.internal.util.nodeselection.SelectionSpecificAction;
 import org.eclipse.buildship.ui.internal.view.task.TaskViewActionStateRules.TaskScopedActionEnablement;
 
@@ -22,8 +23,8 @@ import org.eclipse.buildship.ui.internal.view.task.TaskViewActionStateRules.Task
 public final class RunTasksAction extends CommandBackedAction implements SelectionSpecificAction {
 
     @SuppressWarnings("cast")
-    public RunTasksAction(String commandId) {
-        super(commandId);
+    public RunTasksAction(String commandId, NodeSelectionProvider selectionProvider) {
+        super(commandId, selectionProvider);
 
         setText(TaskViewMessages.Action_RunTasks_Text);
         setToolTipText(TaskViewMessages.Action_RunTasks_Tooltip);

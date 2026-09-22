@@ -11,6 +11,7 @@ package org.eclipse.buildship.ui.internal.view.task;
 
 import org.eclipse.buildship.ui.internal.util.action.CommandBackedAction;
 import org.eclipse.buildship.ui.internal.util.nodeselection.NodeSelection;
+import org.eclipse.buildship.ui.internal.util.nodeselection.NodeSelectionProvider;
 import org.eclipse.buildship.ui.internal.util.nodeselection.SelectionSpecificAction;
 
 /**
@@ -18,8 +19,8 @@ import org.eclipse.buildship.ui.internal.util.nodeselection.SelectionSpecificAct
  */
 public final class OpenBuildScriptAction extends CommandBackedAction implements SelectionSpecificAction {
 
-    public OpenBuildScriptAction(String commandId) {
-        super(commandId);
+    public OpenBuildScriptAction(String commandId, NodeSelectionProvider selectionProvider) {
+        super(commandId, selectionProvider);
 
         setText(TaskViewMessages.Action_OpenBuildScript_Text);
         setToolTipText(TaskViewMessages.Action_OpenBuildScript_Tooltip);
