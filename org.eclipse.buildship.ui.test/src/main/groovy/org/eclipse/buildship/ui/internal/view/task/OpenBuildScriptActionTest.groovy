@@ -23,7 +23,7 @@ class OpenBuildScriptActionTest extends ViewSpecification {
   OpenBuildScriptAction openAction
 
   def setup() {
-    openAction = new OpenBuildScriptAction(UiPluginConstants.OPEN_BUILD_SCRIPT_COMMAND_ID)
+    openAction = new OpenBuildScriptAction(UiPluginConstants.OPEN_BUILD_SCRIPT_COMMAND_ID, { NodeSelection.empty() })
   }
 
   def "Action is not visible nor enabled when nothing is selected"() {

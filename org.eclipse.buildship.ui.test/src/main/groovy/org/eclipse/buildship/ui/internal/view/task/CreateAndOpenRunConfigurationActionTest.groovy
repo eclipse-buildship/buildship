@@ -30,8 +30,8 @@ class CreateAndOpenRunConfigurationActionTest extends ViewSpecification {
     OpenRunConfigurationAction openAction
 
     def setup() {
-        createAction = new CreateRunConfigurationAction(UiPluginConstants.OPEN_RUN_CONFIGURATION_COMMAND_ID)
-        openAction = new OpenRunConfigurationAction(UiPluginConstants.OPEN_RUN_CONFIGURATION_COMMAND_ID)
+        createAction = new CreateRunConfigurationAction(UiPluginConstants.OPEN_RUN_CONFIGURATION_COMMAND_ID, { NodeSelection.empty() })
+        openAction = new OpenRunConfigurationAction(UiPluginConstants.OPEN_RUN_CONFIGURATION_COMMAND_ID, { NodeSelection.empty() })
     }
 
     def "No action is visible when the nothing is selected"() {

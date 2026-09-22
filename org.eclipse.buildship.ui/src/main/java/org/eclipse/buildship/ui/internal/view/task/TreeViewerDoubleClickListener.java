@@ -17,10 +17,9 @@ import org.eclipse.jface.viewers.IContentProvider;
 import org.eclipse.jface.viewers.IDoubleClickListener;
 import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.jface.viewers.TreeViewer;
-import org.eclipse.ui.PlatformUI;
-import org.eclipse.ui.handlers.IHandlerService;
 
 import org.eclipse.buildship.core.internal.GradlePluginsRuntimeException;
+import org.eclipse.buildship.ui.internal.util.action.CommandUtils;
 import org.eclipse.buildship.ui.internal.util.nodeselection.NodeSelection;
 
 /**
@@ -42,7 +41,7 @@ public final class TreeViewerDoubleClickListener implements IDoubleClickListener
     public void doubleClick(DoubleClickEvent event) {
         NodeSelection nodeSelection = NodeSelection.from(this.treeViewer.getSelection());
         if (isEnabledFor(nodeSelection)) {
-            run();
+            run(nodeSelection);
         } else if (nodeSelection.isSingleSelection()) {
             Object selected = nodeSelection.toList().get(0);
             IContentProvider provider = this.treeViewer.getContentProvider();
@@ -60,17 +59,12 @@ public final class TreeViewerDoubleClickListener implements IDoubleClickListener
         return TaskViewActionStateRules.taskScopedTaskExecutionActionsEnablement(node).asBoolean();
     }
 
-    private void run() {
+    private void run(NodeSelection nodeSelection) {
         try {
-            getHandlerService().executeCommand(this.commandId, null);
+            CommandUtils.executeCommandForSelection(this.commandId, null, nodeSelection);
         } catch (Exception e) {
             throw new GradlePluginsRuntimeException(String.format("Cannot execute command '%s'.", this.commandId), e);
         }
-    }
-
-    @SuppressWarnings({"cast", "RedundantCast"})
-    private IHandlerService getHandlerService() {
-        return (IHandlerService) PlatformUI.getWorkbench().getActiveWorkbenchWindow().getService(IHandlerService.class);
     }
 
 }
