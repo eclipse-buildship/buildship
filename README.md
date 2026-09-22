@@ -1,4 +1,4 @@
-# Eclipse Buildship: Gradle integration for the Eclipse IDE <a href="https://builds.gradle.org/viewType.html?buildTypeId=Tooling_Buildship_Checkpoint_Full_Test_Coverage_Phase_33"><img src="https://builds.gradle.org/guestAuth/app/rest/builds/buildType:(id:Tooling_Buildship_Checkpoint_Full_Test_Coverage_Phase_33)/statusIcon"/></a>
+# Eclipse Buildship: Gradle integration for the Eclipse IDE
 
 > [!TIP]
 > We have preview of Declarative Gradle support. See [here](/docs/user/DeclarativeGradle.md) how to set it up.

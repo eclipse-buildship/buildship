@@ -13,9 +13,3 @@ eclipseTest {
 tasks.withType(eclipsebuild.testing.EclipseTestTask) {    
     systemProperty "org.eclipse.swtbot.keyboard.layout", "EN_US"
 }
-
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(17) // TODO all Gradle plugins should use Java 17 for Eclipse 4.25+
-    }
-}

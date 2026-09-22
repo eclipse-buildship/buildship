@@ -2,9 +2,10 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Buildship, Eclipse Plug-ins for Gradle - Core
 Bundle-SymbolicName: org.eclipse.buildship.core;singleton:=true
-Bundle-Version: 3.1.10.qualifier
+Automatic-Module-Name: org.eclipse.buildship.core
+Bundle-Version: 3.1.13.qualifier
 Bundle-Vendor: Eclipse Buildship
-Bundle-RequiredExecutionEnvironment: JavaSE-11
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Bundle-Activator: org.eclipse.buildship.core.internal.CorePlugin
 Require-Bundle: org.eclipse.core.expressions,
  org.eclipse.core.filesystem,
@@ -16,7 +17,7 @@ Require-Bundle: org.eclipse.core.expressions,
  org.eclipse.jdt.junit.core,
  org.eclipse.jdt.launching,
  org.eclipse.debug.core,
- org.gradle.toolingapi;bundle-version="[8.9.0,8.10.0)";visibility:=reexport,
+ org.gradle.toolingapi;bundle-version="[9.7.0,9.8.0)";visibility:=reexport,
  com.google.guava;bundle-version="33.3.1",
  com.google.gson;bundle-version="[2.11.0,3.0.0)",
  org.eclipse.buildship.compat;visibility:=reexport

@@ -66,8 +66,9 @@ public final class TaskViewState {
         prefs.putBoolean(PREF_SORT_BY_TYPE, this.sortByType);
         prefs.putBoolean(PREF_SORT_BY_VISIBILITY, this.sortByVisibility);
         prefs.putBoolean(PREF_LINK_TO_SELECTION, this.linkToSelection);
-        prefs.putInt(PREF_HEADER_NAME_COLUMN_WIDTH, this.headerNameColumnWidth);
-        prefs.putInt(PREF_HEADER_DESCRIPTION_COLUMN_WIDTH, this.headerDescriptionColumnWidth);
+        // minimum width is 1, so that the columns are resizeable by the user
+        prefs.putInt(PREF_HEADER_NAME_COLUMN_WIDTH, Math.max(1, this.headerNameColumnWidth));
+        prefs.putInt(PREF_HEADER_DESCRIPTION_COLUMN_WIDTH, Math.max(1, this.headerDescriptionColumnWidth));
         prefs.putBoolean(PREF_GROUP_TASKS, this.groupTasks);
         prefs.putBoolean(PREF_FLATTEN_PROJECT_HIERARCHY, this.projectHierarchyFlattened);
 

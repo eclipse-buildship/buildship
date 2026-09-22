@@ -148,7 +148,7 @@ class RefreshingTheGradleClasspathContainer extends ProjectSynchronizationSpecif
 
     private static def hasLocalGroovyDependencyDefinedInClasspathContainer(IJavaProject javaProject) {
         IClasspathContainer rootContainer = JavaCore.getClasspathContainer(GradleClasspathContainer.CONTAINER_PATH, javaProject)
-        rootContainer.classpathEntries.find  { it.path.toPortableString().contains('groovy-3') } != null
+        rootContainer.classpathEntries.find { it.path.lastSegment() ==~ /groovy-\d+\..*\.jar/ } != null
     }
 
 }

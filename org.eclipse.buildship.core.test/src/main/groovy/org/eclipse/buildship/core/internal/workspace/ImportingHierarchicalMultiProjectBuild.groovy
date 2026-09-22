@@ -9,9 +9,14 @@
  ******************************************************************************/
 package org.eclipse.buildship.core.internal.workspace
 
+import spock.lang.IgnoreIf
+
 import spock.lang.Issue
 
+import org.eclipse.buildship.core.SynchronizationResult
+
 import org.eclipse.core.resources.IProject
+import org.eclipse.core.runtime.IStatus
 import org.eclipse.core.runtime.IStatus
 import org.eclipse.core.runtime.NullProgressMonitor
 import org.eclipse.core.runtime.Path
@@ -21,6 +26,7 @@ import org.eclipse.buildship.core.internal.CorePlugin
 import org.eclipse.buildship.core.internal.Logger
 import org.eclipse.buildship.core.internal.configuration.GradleProjectNature
 import org.eclipse.buildship.core.internal.test.fixtures.EclipseProjects
+import org.eclipse.buildship.core.internal.operation.ToolingApiStatus.ToolingApiStatusType
 import org.eclipse.buildship.core.internal.test.fixtures.ProjectSynchronizationSpecification
 
 class ImportingHierarchicalMultiProjectBuild extends ProjectSynchronizationSpecification {
@@ -85,6 +91,7 @@ class ImportingHierarchicalMultiProjectBuild extends ProjectSynchronizationSpeci
         GradleProjectNature.isPresentOn(project)
     }
 
+    @IgnoreIf({ !ProjectSynchronizationSpecification.toleratesMissingProjectDirectories() })
     def "Nonexisting sub projects are ignored"() {
         setup:
         fileTree(rootDir).file('settings.gradle').text = """
@@ -99,6 +106,22 @@ class ImportingHierarchicalMultiProjectBuild extends ProjectSynchronizationSpeci
 
         then:
         0 * logger.error(_)
+    }
+
+    @IgnoreIf({ ProjectSynchronizationSpecification.toleratesMissingProjectDirectories() })
+    def "Nonexisting sub projects fail the synchronization"() {
+        setup:
+        fileTree(rootDir).file('settings.gradle').text = """
+           include 'moduleA'
+           include 'moduleB'
+        """
+
+        when:
+        SynchronizationResult result = trySynchronizeAndWait(rootDir)
+
+        then:
+        result.status.severity == IStatus.WARNING
+        ToolingApiStatusType.CONNECTION_FAILED.matches(result.status)
     }
 
     @Issue("https://github.com/eclipse/buildship/issues/844")

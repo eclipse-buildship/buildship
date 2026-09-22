@@ -45,13 +45,20 @@ def targetPlatformIds = [
         '432',
         '433',
         '434',
+        '435',
+        '436',
+        '437',
+        '438',
+        '439',
+        '440',
+        '441',
 ]
 
 // target platform definition for all major Eclipse releases between version 4.3 and 4.8
 // the default version is 48 which can be overridden through -Peclipse.version=<version>
 // also the target platforms contain 1) the Eclipse SDK 2) the latest junit 3) SWTBot 2.2.1
 eclipseBuild {
-    defaultEclipseVersion = '434'
+    defaultEclipseVersion = '441'
     // TODO make the default targetPlatformIds.last() after adding support for running builds on Java 17. e424+ builds should run on Java 17.
 
     final def swtPluginId = "org.eclipse.swt.${ECLIPSE_WS}.${ECLIPSE_OS}.${ECLIPSE_ARCH}"
@@ -103,10 +110,16 @@ subprojects {
                     languageVersion = JavaLanguageVersion.of(11)
                 }
             }
-        } else {
+        } else if (config.targetPlatform.eclipseVersion in ['425', '426', '427', '428', '429', '430', '431', '432', '433', '434']) {
             java {
                 toolchain {
                     languageVersion = JavaLanguageVersion.of(17)
+                }
+            }
+        } else {
+            java {
+                toolchain {
+                    languageVersion = JavaLanguageVersion.of(21)
                 }
             }
         }
@@ -146,6 +159,9 @@ subprojects {
     // share checkstyle config across all sub-projects
     def checkstyleConfigDir = "$rootDir/gradle/config/checkstyle"
     tasks.withType(Checkstyle).all {
+        javaLauncher = javaToolchains.launcherFor {
+            languageVersion = JavaLanguageVersion.of(17)
+        }
         configFile = "$checkstyleConfigDir/checkstyle.xml" as File
         configProperties = ['checkstyleConfigDir': checkstyleConfigDir]
         inputs.file "$checkstyleConfigDir/suppressions.xml" as File
@@ -157,8 +173,13 @@ subprojects {
     tasks.withType(EclipseTestTask).all {
         def java8 = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(8) }
         def java11 = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(11) }
-        jvmArgs "-Djdk8.location=${java8.get().metadata.installationPath.asFile}"
-        jvmArgs "-Djdk11.location=${java11.get().metadata.installationPath.asFile}"
+        def realJavaHome = { launcher ->
+            new File(launcher.get().metadata.installationPath.asFile, 'bin').canonicalFile.parentFile
+        }
+        def java8Home = realJavaHome(java8)
+        def java11Home = realJavaHome(java11)
+        jvmArgs "-Djdk8.location=${java8Home}"
+        jvmArgs "-Djdk11.location=${java11Home}"
 
         def config = Config.on(project)
         if (config.targetPlatform.eclipseVersion in ['48', '49', '410', '411', '412', '413', '414', '415', '416', '417', '418', '419', '420', '421', '422', '423', '424', '425', '426', '427', '428']) {
@@ -266,14 +287,22 @@ String getVersionQualifier() {
     String suffix = getVersionSuffix(config)
 
     // use full timestamp on CI vs. date-only for local builds
-    if (project.hasProperty('qualifier')) {
-        'v' + project.getProperty('qualifier')
-    } else if (project.hasProperty('build.invoker') && project.property('build.invoker') == 'ci') {
-        // note that for Eclipse plugin versions, the '-' and '.' character are invalid in front of the build id
-        'v' + new Date().format('yyyyMMdd-kkmm', TimeZone.getTimeZone('GMT')) + suffix
-    } else {
-        'v' + new Date().format('yyyyMMdd', TimeZone.getTimeZone('GMT')) + suffix
+    // note that for Eclipse plugin versions, the '-' and '.' character are invalid in front of the build id
+    boolean invokedByCi = project.hasProperty('build.invoker') && project.property('build.invoker') == 'ci'
+    String pattern = invokedByCi ? 'yyyyMMdd-HHmm' : 'yyyyMMdd'
+
+    'v' + resolveBuildTimestamp().format(pattern, TimeZone.getTimeZone('GMT')) + suffix
+}
+
+private Date resolveBuildTimestamp() {
+    if (!project.hasProperty('buildTimestamp')) {
+        return new Date()
     }
+    String seconds = project.getProperty('buildTimestamp').toString().trim()
+    if (!seconds.isLong()) {
+        throw new IllegalArgumentException("Invalid buildTimestamp '$seconds': expected the number of seconds since the epoch.")
+    }
+    new Date(seconds.toLong() * 1000)
 }
 
 private getVersionSuffix(BuildshipConfig config) {

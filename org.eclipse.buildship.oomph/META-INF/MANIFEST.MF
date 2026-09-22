@@ -4,11 +4,11 @@ Bundle-Name: %pluginName
 Bundle-Vendor: %providerName
 Bundle-SymbolicName: org.eclipse.buildship.oomph;singleton:=true
 Automatic-Module-Name: org.eclipse.buildship.oomph
-Bundle-Version: 3.1.10.qualifier
+Bundle-Version: 3.1.13.qualifier
 Bundle-ClassPath: .
 Bundle-ActivationPolicy: lazy
 Bundle-Localization: plugin
-Bundle-RequiredExecutionEnvironment: JavaSE-11
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Require-Bundle: org.eclipse.core.runtime,
  org.eclipse.emf.ecore;bundle-version="[2.10.0,3.0.0)";visibility:=reexport,
  org.eclipse.oomph.resources;bundle-version="[1.1.0,2.0.0)";visibility:=reexport,

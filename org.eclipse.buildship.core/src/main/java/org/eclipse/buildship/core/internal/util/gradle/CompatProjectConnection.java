@@ -263,6 +263,12 @@ public class CompatProjectConnection implements ProjectConnection {
         }
 
         @Override
+        public ModelBuilder<T> withDetailedFailure() {
+            this.delegate.withDetailedFailure();
+            return this;
+        }
+
+        @Override
         public ModelBuilder<T> withCancellationToken(CancellationToken cancellationToken) {
             this.delegate.withCancellationToken(cancellationToken);
             return this;
@@ -404,6 +410,12 @@ public class CompatProjectConnection implements ProjectConnection {
         @Override
         public BuildActionExecuter<T> forTasks(String... tasks) {
             this.delegate.forTasks(tasks);
+            return this;
+        }
+
+        @Override
+        public BuildActionExecuter<T> withDetailedFailure() {
+            this.delegate.withDetailedFailure();
             return this;
         }
 

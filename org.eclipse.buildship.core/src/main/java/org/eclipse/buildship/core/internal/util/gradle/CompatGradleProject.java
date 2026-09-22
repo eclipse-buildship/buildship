@@ -59,6 +59,16 @@ class CompatGradleProject extends CompatModelElement<GradleProject> implements G
     }
 
     @Override
+    public String getBuildTreePath() {
+        // Gradle versions < 8.2 do not provide the build tree path; in a single build it equals the project path
+        try {
+            return getElement().getBuildTreePath();
+        } catch (Exception ignore) {
+            return getPath();
+        }
+    }
+
+    @Override
     public GradleScript getBuildScript() {
         // If Gradle versions < 1.8 then <code>null</code> is returned
         try {

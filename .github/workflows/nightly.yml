@@ -9,7 +9,7 @@ on:
     - cron: "0 2 * * *"
 
 env:
-  ECLIPSE_LATEST: "434"
+  ECLIPSE_LATEST: "441"
 
 jobs:
   sanity-check:
@@ -100,8 +100,8 @@ jobs:
       fail-fast: false
       matrix:
 #        TODO we should re-add 425
-#        eclipse: ["8", "416", "417", "424", "425", "${{ needs.matrix-compute.outputs.latestEclipse }}"]
-        eclipse: ["8", "416", "417", "424", "${{ needs.matrix-compute.outputs.latestEclipse }}"]
+#        eclipse: ["48", "416", "417", "424", "425", "${{ needs.matrix-compute.outputs.latestEclipse }}"]
+        eclipse: ["48", "416", "417", "424", "${{ needs.matrix-compute.outputs.latestEclipse }}"]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

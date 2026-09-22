@@ -249,10 +249,10 @@ abstract class WorkspaceSpecification extends Specification {
             """
                 repositories {
                     if (org.gradle.api.JavaVersion.current().isJava8Compatible()) {
-                        jcenter()
+                        mavenCentral()
                     } else {
                         maven {
-                            url = "http://jcenter.bintray.com"
+                            url = "https://repo1.maven.org/maven2/"
                         }
                     }
                 }

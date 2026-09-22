@@ -15,6 +15,10 @@ import java.util.Map.Entry;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import org.gradle.tooling.events.problems.AdditionalData;
+import org.gradle.tooling.events.problems.ContextualLabel;
+import org.gradle.tooling.events.problems.Details;
+import org.gradle.tooling.events.problems.DocumentationLink;
 import org.gradle.tooling.events.problems.ProblemContext;
 import org.gradle.tooling.events.problems.ProblemDefinition;
 import org.gradle.tooling.events.problems.ProblemGroup;
@@ -73,6 +77,18 @@ public abstract class ProblemEventAdapter implements Consumer<IMarker> {
 
     }
 
+    static String textOf(ContextualLabel contextualLabel) {
+        return contextualLabel == null ? null : contextualLabel.getContextualLabel();
+    }
+
+    static String textOf(Details details) {
+        return details == null ? null : details.getDetails();
+    }
+
+    static String urlOf(DocumentationLink documentationLink) {
+        return documentationLink == null ? null : documentationLink.getUrl();
+    }
+
     private static String fqid(ProblemId problemId) {
         return groupFqid(problemId.getGroup()) + ":" + problemId.getName();
     }
@@ -101,12 +117,12 @@ public abstract class ProblemEventAdapter implements Consumer<IMarker> {
 
         @Override
         protected String getContextualLabel() {
-            return this.context.getDetails().getDetails();
+            return textOf(this.context.getDetails());
         }
 
         @Override
         protected String getDetails() {
-            return this.context.getDetails().getDetails();
+            return textOf(this.context.getDetails());
         }
 
         @Override
@@ -121,7 +137,7 @@ public abstract class ProblemEventAdapter implements Consumer<IMarker> {
 
         @Override
         protected String getDocumentationUrl() {
-            return this.definition.getDocumentationLink().getUrl();
+            return urlOf(this.definition.getDocumentationLink());
         }
     }
 
@@ -135,27 +151,28 @@ public abstract class ProblemEventAdapter implements Consumer<IMarker> {
 
         @Override
         protected ProblemId getId() {
-            return this.problem.getDefinition().getId();
+            return this.problem.getProblem().getDefinition().getId();
         }
 
         @Override
         protected String getContextualLabel() {
-            return this.problem.getContextualLabel().getContextualLabel();
+            return textOf(this.problem.getProblem().getContextualLabel());
         }
 
         @Override
         protected String getDetails() {
-            return this.problem.getDetails().getDetails();
+            return textOf(this.problem.getProblem().getDetails());
         }
 
         @Override
         protected List<Solution> getSolutions() {
-            return this.problem.getSolutions();
+            return this.problem.getProblem().getSolutions();
         }
 
         @Override
         protected String getAdditionalData() {
-            return mapToMultiLineString(this.problem.getAdditionalData().getAsMap());
+            AdditionalData additionalData = this.problem.getProblem().getAdditionalData();
+            return additionalData == null ? null : mapToMultiLineString(additionalData.getAsMap());
         }
 
         private static String mapToMultiLineString (Map<String, Object> map) {
@@ -173,7 +190,7 @@ public abstract class ProblemEventAdapter implements Consumer<IMarker> {
 
         @Override
         protected String getDocumentationUrl() {
-            return this.problem.getDefinition().getDocumentationLink().getUrl();
+            return urlOf(this.problem.getProblem().getDefinition().getDocumentationLink());
         }
     }
 

@@ -56,6 +56,34 @@ class ImportingProjectsWithDependenciesCrossVersionTest extends ProjectSynchroni
                 """
                 dir('src/main/java')
             }
+            dir('sub2') {
+                file 'build.gradle', '''
+                    description = 'sub project 2'
+                    task myFirstTaskOfSub2 {
+                        description = '1st task of sub2'
+                    }
+                    task mySecondTaskOfSub2 {
+                        description = '2nd task of sub2'
+                    }
+                    task myTask {
+                        description = 'another task of sub2'
+                        group = 'build'
+                    }
+
+                '''
+                dir('subSub1') {
+                    file 'build.gradle', '''
+                        description = 'subSub project 1 of sub project 2'
+                        task myFirstTaskOfSub2subSub1{
+                            description = '1st task of sub2:subSub1'
+                        }
+                        task mySecondTaskOfSub2subSub1{
+                            description = '2nd task of sub2:subSub1'
+                        }
+                        task myTask {}
+                    '''
+                }
+            }
         }
     }
 
@@ -131,4 +159,3 @@ class ImportingProjectsWithDependenciesCrossVersionTest extends ProjectSynchroni
         findJavaProject('api').getResolvedClasspath(true).find { it.entryKind == IClasspathEntry.CPE_LIBRARY && it.path.toPortableString().contains('guava') }
     }
 }
-

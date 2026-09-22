@@ -128,22 +128,26 @@ class GradleErrorMarkerTest extends ProjectSynchronizationSpecification {
     }
 
 
-    def "Convers problem reports to error markers"() {
+    def "Converts problem reports to error markers"() {
         setup:
         WorkspaceConfiguration w = CorePlugin.configurationManager().loadWorkspaceConfiguration()
         configurationManager.saveWorkspaceConfiguration(new WorkspaceConfiguration(w.gradleDistribution, w.gradleUserHome, w.javaHome, w.offline, w.buildScansEnabled, w.autoSync, w.arguments, w.jvmArguments, w.showConsoleView, w.showExecutionsView, w.experimentalModuleSupportEnabled , true, ""))
         File projectDir = dir('error-marker-test') {
             file 'build.gradle', '''
                 import org.gradle.api.internal.GradleInternal
+                import org.gradle.api.problems.ProblemGroup
+                import org.gradle.api.problems.ProblemId
                 import org.gradle.api.problems.Problems
                 import org.gradle.api.problems.Severity
 
                 def gradleInternal = gradle as GradleInternal
                 def problems = gradleInternal.services.get(Problems)
 
-                problems.forNamespace("buildscript").reporting {
-                    it.id("id", 'My problem')
-                        .details("Problem details")
+                def group = ProblemGroup.create("generic", "Generic")
+                def id = ProblemId.create("id", "My problem", group)
+
+                problems.reporter.report(id) {
+                    it.details("Problem details")
                         .severity(Severity.WARNING)
                         .solution("Please use 'standard-plugin-2' instead of this plugin")
                 }
@@ -160,6 +164,5 @@ class GradleErrorMarkerTest extends ProjectSynchronizationSpecification {
 
         cleanup:
         CorePlugin.configurationManager().saveWorkspaceConfiguration(w)
-
     }
 }

@@ -76,7 +76,8 @@ public class CompatibilityChecker {
         Set<Throwable> seen = new HashSet<>();
         Throwable current = e;
         while (current != null) {
-            if (current.getMessage().contains(UNSUPPORTED_BUILD_ENVIRONMENT_MESSAGE)) {
+            String message = current.getMessage();
+            if (message != null && message.contains(UNSUPPORTED_BUILD_ENVIRONMENT_MESSAGE)) {
                 return true;
             }
             if (!seen.add(current)) {

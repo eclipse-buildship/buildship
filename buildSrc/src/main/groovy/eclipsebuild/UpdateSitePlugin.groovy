@@ -11,6 +11,9 @@
 
 package eclipsebuild
 
+import groovy.xml.XmlParser
+import groovy.xml.XmlNodePrinter
+
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task

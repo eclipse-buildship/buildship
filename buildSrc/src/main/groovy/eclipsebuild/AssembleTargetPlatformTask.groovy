@@ -1,5 +1,6 @@
 package eclipsebuild
 
+import groovy.xml.XmlSlurper
 
 import org.gradle.api.DefaultTask
 import org.gradle.api.Project
@@ -107,7 +108,7 @@ abstract class AssembleTargetPlatformTask extends DefaultTask {
                 '-roaming',
                 '-nosplash',
                 '-consoleLog',
-                '-vmargs', '-Declipse.p2.mirror=false')
+                *Constants.p2VmArgs)
 
             it.ignoreExitValue = true
         }
@@ -132,7 +133,7 @@ abstract class AssembleTargetPlatformTask extends DefaultTask {
                 '-roaming',
                 '-nosplash',
                 '-consoleLog',
-                '-vmargs', '-Declipse.p2.mirror=false')
+                *Constants.p2VmArgs)
         }
     }
 }

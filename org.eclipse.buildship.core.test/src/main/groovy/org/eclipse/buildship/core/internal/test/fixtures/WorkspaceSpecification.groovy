@@ -25,6 +25,7 @@ import org.eclipse.core.runtime.ILogListener
 import org.eclipse.core.runtime.IStatus
 import org.eclipse.core.runtime.Path
 import org.eclipse.core.runtime.Platform
+import org.eclipse.core.runtime.jobs.Job
 import org.eclipse.debug.core.DebugPlugin
 import org.eclipse.debug.core.ILaunchConfigurationType
 import org.eclipse.debug.core.ILaunchConfigurationWorkingCopy
@@ -67,6 +68,8 @@ abstract class WorkspaceSpecification extends Specification {
         Platform.addLogListener(logCollector)
         EclipseVmUtil.findOrRegisterVM("8", new File((String) System.getProperty("jdk8.location")))
         EclipseVmUtil.findOrRegisterVM("11", new File((String) System.getProperty("jdk11.location")))
+        Job.jobManager.join(CorePlugin.GRADLE_JOB_FAMILY, null)
+        deleteAllGradleErrorMarkers()
     }
 
     def cleanup() {
@@ -243,7 +246,7 @@ abstract class WorkspaceSpecification extends Specification {
     }
 
     private void deleteAllGradleErrorMarkers() {
-        gradleErrorMarkers.each { it.delete() }
+        workspace.root.findMarkers(GradleErrorMarker.ID, false, IResource.DEPTH_INFINITE).each { it.delete() }
     }
 
     protected List<IMarker> getGradleErrorMarkers(IResource rootResource = workspace.root) {

@@ -14,9 +14,3 @@ def copyLibs = tasks.register('downloadLibs', Download) {
 	username project.findProperty('gpr.user')
 	password project.findProperty('gpr.key')
 }
-
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(17) // TODO all Gradle plugins should use Java 17 for Eclipse 4.25+
-    }
-}
