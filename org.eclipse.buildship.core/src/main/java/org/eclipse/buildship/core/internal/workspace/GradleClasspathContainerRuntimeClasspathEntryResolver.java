@@ -142,7 +142,10 @@ public final class GradleClasspathContainerRuntimeClasspathEntryResolver impleme
         }
 
         for (final IClasspathEntry cpe : container.getClasspathEntries()) {
-            if (cpe.getEntryKind() == IClasspathEntry.CPE_LIBRARY && !(excludeTestCode && hasTestAttribute(cpe))) {
+            if (excludeTestCode && hasTestAttribute(cpe)) {
+                continue;
+            }
+            if (cpe.getEntryKind() == IClasspathEntry.CPE_LIBRARY) {
                 result.add(getRuntimeClasspathEntry(cpe.getPath(), moduleSuppport, "Archive", JavaRuntime::newArchiveRuntimeClasspathEntry, IPath.class, cpe));
             } else if (cpe.getEntryKind() == IClasspathEntry.CPE_PROJECT) {
                 Optional<IProject> candidate = findAccessibleJavaProject(cpe.getPath().segment(0));
