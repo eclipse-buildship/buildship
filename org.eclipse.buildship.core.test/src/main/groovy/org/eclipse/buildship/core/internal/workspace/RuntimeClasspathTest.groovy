@@ -234,8 +234,32 @@ class RuntimeClasspathTest extends ProjectSynchronizationSpecification {
         !classpath.find { it.type == IRuntimeClasspathEntry.ARCHIVE && it.path.toPortableString() == '/a/bin/test' }
     }
 
-    private IRuntimeClasspathEntry[] projectRuntimeClasspath(IJavaProject project) {
+    @Issue("https://github.com/eclipse-buildship/buildship/issues/1383")
+    @IgnoreIf({ !PlatformUtils.supportsTestAttributes() })
+    def "Test-only project dependency is absent from the runtime classpath when test code is excluded"() {
+        setup:
+        new File(location, 'a/src/main/java').mkdirs()
+        new File(location, 'b/src/test/java').mkdirs()
+        buildFile << '''
+            project(':b') {
+                dependencies {
+                    testImplementation project(':a')
+                }
+            }
+        '''
+        importAndWait(location)
+
+        when:
+        IJavaProject javaProject = JavaCore.create(findProject('b'))
+        IRuntimeClasspathEntry[] classpath = projectRuntimeClasspath(javaProject, true)
+
+        then:
+        !classpath.find { it.path.toPortableString() == '/a' }
+        !classpath.find { it.path.toPortableString().startsWith('/a/bin') }
+    }
+
+    private IRuntimeClasspathEntry[] projectRuntimeClasspath(IJavaProject project, boolean excludeTestCode = false) {
         IRuntimeClasspathEntry projectEntry = JavaRuntime.computeUnresolvedRuntimeClasspath(project).find { it.path == project.project.fullPath }
-        JavaRuntime.resolveRuntimeClasspathEntry(projectEntry, project)
+        JavaRuntime.resolveRuntimeClasspathEntry(projectEntry, project, excludeTestCode)
     }
 }
