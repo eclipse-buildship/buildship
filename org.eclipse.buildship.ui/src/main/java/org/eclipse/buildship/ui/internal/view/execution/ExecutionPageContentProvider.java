@@ -9,6 +9,10 @@
  ******************************************************************************/
 package org.eclipse.buildship.ui.internal.view.execution;
 
+import java.util.stream.Collectors;
+
+import org.gradle.tooling.events.FailureResult;
+
 import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.jface.viewers.Viewer;
 
@@ -17,6 +21,8 @@ import org.eclipse.jface.viewers.Viewer;
  */
 public class ExecutionPageContentProvider implements ITreeContentProvider {
 
+    private boolean filterFailedItems = false;
+
     @Override
     public Object[] getElements(Object inputElement) {
         return getChildren(inputElement);
@@ -24,7 +30,15 @@ public class ExecutionPageContentProvider implements ITreeContentProvider {
 
     @Override
     public Object[] getChildren(Object parent) {
-        return parent instanceof OperationItem ? ((OperationItem)parent).getChildren().toArray() : new Object[0];
+        if (this.isFilterFailedItemsEnabled()) {
+            if (parent instanceof OperationItem) {
+                return ((OperationItem)parent).getChildren().stream().filter(operationItem -> operationItem.getFinishEvent().getResult() instanceof FailureResult).collect(Collectors.toList()).toArray();
+            } else {
+                return new Object[0];
+            }
+        } else {
+            return parent instanceof OperationItem ? ((OperationItem)parent).getChildren().toArray() : new Object[0];
+        }
     }
 
     @Override
@@ -43,5 +57,13 @@ public class ExecutionPageContentProvider implements ITreeContentProvider {
 
     @Override
     public void dispose() {
+    }
+
+    public boolean isFilterFailedItemsEnabled() {
+        return this.filterFailedItems;
+    }
+
+    public void toggleFilterFailedItems() {
+        this.filterFailedItems = !this.filterFailedItems;
     }
 }
