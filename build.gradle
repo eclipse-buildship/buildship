@@ -250,9 +250,14 @@ task incrementVersion {
                 newVersion = matcher.group(1) + "." + matcher.group(2) + "." + serviceSegment
                 file('version.txt').text = newVersion
                 Pattern bundleVersionPattern = Pattern.compile('(?<=Bundle-Version: )\\d+\\.\\d+\\.\\d+(?=\\.qualifier)')
-                file('.').eachFileRecurse { file ->
+                final root = file('.')
+                root.eachFileRecurse { file ->
                     if (file.name == 'MANIFEST.MF') {
-                        replacePatternsInFile(file, [(bundleVersionPattern): newVersion])
+                        final relative = root.relativePath(file)
+                        if (relative.startsWith('org.gradle.toolingapi')) // We use the gradle version for our wrapper
+                            replacePatternsInFile(file, [(bundleVersionPattern): toolingApiVersion])
+                        else
+                            replacePatternsInFile(file, [(bundleVersionPattern): newVersion])
                     }
                 }
             } else {
